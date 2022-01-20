@@ -34,7 +34,7 @@ def remove_columns(data, dataset_name):
     elif dataset_name == 'ORAS5':
         # so26chgt, so28chgt were removed because tey have almost always the same values
         # so14chgt had errors in the data
-        data = data.drop(columns=['date', 'so26chgt', 'so28chgt'])
+        data = data.drop(columns=['date', 'so14chgt', 'so26chgt', 'so28chgt'])
         print(f"Columns 'date', 'so14chgt', 'so26chgt', 'so28chgt' were removed from {dataset_name}.")        
     return data
         
@@ -141,25 +141,86 @@ def read_file(dataset_name, data_path='../../data/'):
 
 ### Pre-processing Tests Functions ###
 
-def check_stationarity(variable):
+def check_stationarity(series, variable_name):
     is_stationary = False
-    result = adfuller(variable, autolag='AIC')
+    result = adfuller(series, autolag='AIC')
     labels = ['ADF test statistic','p-value','# lags used','# observations']
     out = pd.Series(result[0:4],index=labels)
     
     for key,val in result[4].items():
         out['critical value ({})'.format(key)]=val
         
-    print(out.to_string())          # .to_string() removes the line "dtype: float64"
+    # print(out.to_string())          # .to_string() removes the line "dtype: float64"
     
     if result[1] <= 0.05:
-        print("Strong evidence against the null hypothesis")
-        print("Reject the null hypothesis")
-        print("Data has no unit root and is stationary")
+        # print("Strong evidence against the null hypothesis")
+        # print("Reject the null hypothesis")
+        # print("Data has no unit root and is stationary")
+        print(f"{variable_name} is stationary (p-value={result[1]}).")
         is_stationary = True
     else:
-        print("Weak evidence against the null hypothesis")
-        print("Fail to reject the null hypothesis")
-        print("Data has a unit root and is non-stationary")
-        
+        # print("Weak evidence against the null hypothesis")
+        # print("Fail to reject the null hypothesis")
+        # print("Data has a unit root and is non-stationary")
+        print(f"{variable_name} is NOT stationary (p-value={result[1]}).")
     return is_stationary
+
+def seasonality_test(series, variable_name, seasonal_period):
+    seasoanl = False
+    idx = np.arange(len(series.index)) % seasonal_period
+    H_statistic, p_value = kruskal(series, idx)
+    # print(H_statistic, p_value)
+    if p_value <= 0.05:
+        print(f'{variable_name} has seasonality.')
+        seasonal = True
+    else:
+        print(print(f'{variable_name} has NO seasonality.'))
+    return seasonal
+
+def trend_test(series, variable_name):
+    has_trend = False
+    trend_test_df = pd.DataFrame(columns=['method', 'has_trend', 'p_value'])
+
+    # Original Mann-Kendall test is a nonparametric test, which does not consider serial correlation or seasonal effects.
+    trend_test_df = trend_test_df.append({'method': 'original_test', 'has_trend': mk.original_test(series).h, 'p_value': mk.original_test(series).p}, ignore_index=True)
+
+    # This modified MK test proposed by Hamed and Rao (1998) to address serial autocorrelation issues.
+    # They suggested a variance correction approach to improve trend analysis.
+    # User can consider first n significant lag by insert lag number in this function.
+    # By default, it considered all significant lags.
+    trend_test_df = trend_test_df.append({'method': 'hamed_rao_modification_test', 
+                                          'has_trend': mk.hamed_rao_modification_test(series).h, 
+                                          'p_value': mk.hamed_rao_modification_test(series).p}, ignore_index=True)
+
+    # This is also a variance correction method for considered serial autocorrelation proposed by Yue, S., & Wang, C. Y. (2004).
+    # User can also set their desired significant n lags for the calculation.
+    trend_test_df = trend_test_df.append({'method': 'yue_wang_modification_test', 
+                                          'has_trend': mk.yue_wang_modification_test(series).h, 
+                                          'p_value': mk.yue_wang_modification_test(series).p}, ignore_index=True)
+
+    # This test suggested by Yue and Wang (2002) to using Pre-Whitening the time series before the application of trend test.
+    trend_test_df = trend_test_df.append({'method': 'pre_whitening_modification_test', 
+                                          'has_trend': mk.pre_whitening_modification_test(series).h, 
+                                          'p_value': mk.pre_whitening_modification_test(series).p}, ignore_index=True)
+
+    # This test also proposed by Yue and Wang (2002) to remove trend component and then Pre-Whitening the time series before application of trend test.
+    trend_test_df = trend_test_df.append({'method': 'trend_free_pre_whitening_modification_test', 
+                                          'has_trend': mk.trend_free_pre_whitening_modification_test(series).h, 
+                                          'p_value': mk.trend_free_pre_whitening_modification_test(series).p}, ignore_index=True)
+
+    # For seasonal time series data, Hirsch, R.M., Slack, J.R. and Smith, R.A. (1982) proposed this test to calculate the seasonal trend.
+    trend_test_df = trend_test_df.append({'method': 'seasonal_test', 
+                                          'has_trend': mk.seasonal_test(series).h, 
+                                          'p_value': mk.seasonal_test(series).p}, ignore_index=True)
+
+    # This method proposed by Hipel (1994) used, when time series significantly correlated with the preceding one or more months/seasons.
+    trend_test_df = trend_test_df.append({'method': 'correlated_seasonal_test', 
+                                          'has_trend': mk.correlated_seasonal_test(series).h, 
+                                          'p_value': mk.correlated_seasonal_test(series).p}, ignore_index=True)
+
+    if trend_test_df['has_trend'].sum()/trend_test_df.shape[0] > 0.5:
+        print(f"{variable_name} has trend. {trend_test_df['has_trend'].sum()}/{trend_test_df.shape[0]} metrics agree.")
+        has_trend = True
+    else:
+        print(f"{variable_name} has NO trend. {trend_test_df['has_trend'].sum()}/{trend_test_df.shape[0]} metrics found a trend.")
+    return has_trend
