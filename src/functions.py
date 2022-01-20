@@ -257,12 +257,15 @@ def apply_sqrt_transformation(series):
     return transformed
 
 def remove_trend_by_subtracting_moving_window(series, window=12):
-    detrended = series - series.rolling(window = window).mean()
-    return detrended
+    rolling_values = series.rolling(window = window).mean()
+    detrended = series - rolling_values
+    # to produce the initial series == detrended+rolling_values
+    return detrended, rolling_values
 
 def remove_seasonality_by_differencing(series, shift=1):
-    deseasonalized = series - series.shift(periods=shift)
-    return deseasonalized
+    shifted_series = series.shift(periods=shift)
+    deseasonalized = series - shifted_series
+    return deseasonalized, shifted_series
 
 def remove_seasonality_by_decomposition(series, model='additive'):
     if model == 'additive':
