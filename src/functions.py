@@ -3,6 +3,8 @@ import pandas as pd
 
 import statsmodels.api as sm
 import pymannkendall as mk
+from scipy.stats import kruskal
+from scipy import signal
 from statsmodels.tsa.stattools import adfuller
 
 ### Read Functions ###
@@ -166,7 +168,7 @@ def check_stationarity(series, variable_name):
     return is_stationary
 
 def seasonality_test(series, variable_name, seasonal_period):
-    seasoanl = False
+    seasonal = False
     idx = np.arange(len(series.index)) % seasonal_period
     H_statistic, p_value = kruskal(series, idx)
     # print(H_statistic, p_value)
@@ -174,7 +176,7 @@ def seasonality_test(series, variable_name, seasonal_period):
         print(f'{variable_name} has seasonality.')
         seasonal = True
     else:
-        print(print(f'{variable_name} has NO seasonality.'))
+        print(f'{variable_name} has NO seasonality.')
     return seasonal
 
 def trend_test(series, variable_name):
@@ -224,3 +226,63 @@ def trend_test(series, variable_name):
     else:
         print(f"{variable_name} has NO trend. {trend_test_df['has_trend'].sum()}/{trend_test_df.shape[0]} metrics found a trend.")
     return has_trend
+
+
+### Pre-processing Transformations ###
+
+def remove_trend_by_decomposition(series, model='additive'):
+    decomposition = sm.tsa.seasonal_decompose(series, model=model)
+    detrended = series.values - decomposition.trend
+    return detrended
+
+def remove_trend_by_subtracting_the_line_of_best_fit(series):
+    detrended = signal.detrend(series.values)
+    detrended = pd.Series(data=detrended, index=series.index)
+    return detrended
+
+def apply_log_transformation(series):
+    transformed = np.log(series).replace([np.inf, -np.inf], 0)
+    return transformed
+
+def apply_sqrt_transformation(series):
+    series = series + np.abs(series.min())
+    transformed = np.sqrt(series)
+    return transformed
+
+def remove_trend_by_subtracting_moving_window(series, window=12):
+    detrended = series - series.rolling(window = window).mean()
+    return detrended
+
+def remove_seasonality_by_differencing(series, shift=1):
+    deseasonalized = series - series.shift(periods=shift)
+    return deseasonalized
+
+def remove_seasonality_by_decomposition(series, model='additive'):
+    if model == 'additive':
+        decomposition = sm.tsa.seasonal_decompose(series, model=model)
+        deseasonalized = series.values - decomposition.seasonal
+    else:
+        if series.min() > 0:
+            decomposition = sm.tsa.seasonal_decompose(series, model=model)
+            deseasonalized = series.values - decomposition.seasonal
+        else:
+            print('here')
+            series = series + np.abs(series.min()) + 0.000000001
+            decomposition = sm.tsa.seasonal_decompose(series, model=model)
+            deseasonalized = series.values - decomposition.seasonal
+    return deseasonalized
+
+# do not use
+def find_if_series_is_additive_or_multiplicative(series, variable_name, window=12):
+    detrended = apply_sqrt_transformation(series)
+    detrended = remove_trend_by_subtracting_moving_window(detrended, window=window)
+    detrended = detrended/detrended.max()
+    s = detrended.reset_index()
+    s['timeframe'] = s['datetime'].dt.year
+
+    std_of_seasonal = s.groupby('timeframe')[variable_name].std().std()
+    print(s.groupby('timeframe')[variable_name].max() - s.groupby('timeframe')[variable_name].min())
+    if std_of_seasonal >= 1:
+        print(f'{variable_name}: std_of_seasonal is {std_of_seasonal}. Maybe consider multiplicative.')
+    else:
+        print(f'{variable_name}: std_of_seasonal is {std_of_seasonal}. Maybe consider additive.')
