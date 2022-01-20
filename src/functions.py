@@ -138,7 +138,14 @@ def read_file(dataset_name, data_path='../../data/'):
     data = convert_to_datetime_and_set_index(data, dataset_name)
     data = remove_columns(data, dataset_name)
     
-    return data    
+    if str(data.index.freq) == '<Day>':
+        frequency_yearly_period = 365
+    elif str(data.index.freq) == '<MonthBegin>':
+        frequency_yearly_period = 12
+    elif str(data.index.freq) == '<Hour>':
+        frequency_yearly_period = 24*365
+    
+    return data, frequency_yearly_period   
 
 
 ### Pre-processing Tests Functions ###
