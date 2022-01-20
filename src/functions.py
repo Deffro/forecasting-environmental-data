@@ -6,6 +6,7 @@ import pymannkendall as mk
 from scipy.stats import kruskal
 from scipy import signal
 from statsmodels.tsa.stattools import adfuller
+from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 ### Read Functions ###
 
@@ -255,6 +256,12 @@ def apply_sqrt_transformation(series):
     series = series + np.abs(series.min())
     transformed = np.sqrt(series)
     return transformed
+
+def apply_box_cot_transformation(series):
+    transformer = BoxCoxTransformer()
+    transformed = transformer.fit_transform(series+np.abs(series)+0.00000001)
+    # to produce the initial series == transformer.inverse_transform(transformed)-np.abs(series_init)-0.00000001
+    return transformed, transformer
 
 def remove_trend_by_subtracting_moving_window(series, window=12):
     rolling_values = series.rolling(window = window).mean()
