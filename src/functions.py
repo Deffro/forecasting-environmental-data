@@ -7,6 +7,7 @@ from scipy.stats import kruskal
 from scipy import signal
 from statsmodels.tsa.stattools import adfuller
 from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sklearn.preprocessing import MinMaxScaler
 
 ### Read Functions ###
 
@@ -298,10 +299,18 @@ def apply_sqrt_transformation(series):
     return transformed
 
 def apply_box_cot_transformation(series):
+    # series should be positive
     transformer = BoxCoxTransformer()
-    transformed = transformer.fit_transform(series+np.abs(series)+0.00000001)
-    # to produce the initial series == transformer.inverse_transform(transformed)-np.abs(series_init)-0.00000001
+    transformed = transformer.fit_transform(series)
+    # to produce the initial series == transformer.inverse_transform(transformed)
     return transformed, transformer
+
+def apply_min_max_scaling(series):
+    scaler = MinMaxScaler(feature_range=(1, 2))
+    scaler.fit(series.values.reshape(-1, 1))
+    scaled_data = scaler.transform(series.values.reshape(-1, 1))
+    scaled_data = pd.DataFrame(data=scaled_data, index=series.index)[0]
+    return scaled_data, scaler
 
 def remove_trend_by_subtracting_moving_window(series, window=12):
     rolling_values = series.rolling(window = window).mean()
