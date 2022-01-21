@@ -290,11 +290,11 @@ def remove_trend_by_subtracting_the_line_of_best_fit(series):
     return detrended
 
 def apply_log_transformation(series):
-    transformed = np.log(series).replace([np.inf, -np.inf], 0)
+    transformed = np.log(series)
     return transformed
 
 def apply_sqrt_transformation(series):
-    series = series + np.abs(series.min())
+    series = series
     transformed = np.sqrt(series)
     return transformed
 
