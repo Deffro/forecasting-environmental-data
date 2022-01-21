@@ -21,9 +21,37 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data = data.set_index('datetime').asfreq('1D')
     elif dataset_name == 'ORAS5':
         data['datetime']= pd.to_datetime(data['date'], format='%Y%m')
-        data = data.set_index('datetime').asfreq('1MS')        
+        data = data.set_index('datetime').asfreq('1MS')    
+    elif dataset_name == 'AQPiraeus':
+        data['datetime'] = pd.to_datetime(data['datetime']).dt.tz_localize(None)
+        data = data.set_index('datetime').asfreq('1H')
     
     # print('Conversion to datetime was successfull. Frequency is', data.index.freq)
+    return data
+
+def handle_missing_values(data, dataset_name):
+    if dataset_name == 'AQPiraeus':
+        data = data.fillna(-999)
+        for variable in data.columns:
+            new_col = []
+            for i, row in enumerate(data[variable]):
+                if i > 24*365:
+                    if row == -999:
+                        if data[variable].iloc[i-24*365] != -999:
+                            new_col.append(data[variable].iloc[i-24*365]+999)
+                        elif data[variable].iloc[i-2*24*365] != -999:
+                            new_col.append(data[variable].iloc[i-2*24*365]+999)
+                        else:
+                            new_col.append(np.nan)
+                    else:
+                        new_col.append(0)
+                else:
+                    new_col.append(0)
+
+            data[variable] = data[variable] + new_col
+            data[variable] = data[variable].replace(-999, np.nan)
+            data[variable] = data[variable].interpolate(method ='linear', limit_direction ='forward')
+        data = data.dropna()
     return data
 
 def remove_columns(data, dataset_name):
@@ -126,18 +154,19 @@ def get_stats(df, sort_by='Different Values', sort_how=False, exclude=[]):
         return mis_val_table_ren_columns
     
 def read_file(dataset_name, data_path='../../data/'):
-    accepted_dataset_names = ['Solcast', 'ERA5', 'ORAS5', 'AQThess']
+    accepted_dataset_names = ['Solcast', 'ERA5', 'ORAS5', 'AQPiraeus']
     if dataset_name not in accepted_dataset_names:
         raise ValueError(f'dataset_name accepted values are {accepted_dataset_names}')
         
     dataset_names = {'Solcast': '40.554572_25.084034_Solcast_PT60M.csv',
                      'ERA5': 'ERA5 daily data on pressure levels from 1950 to 1978.csv',
                      'ORAS5': 'ORAS5 global ocean reanalysis monthly data from 1958 to present.csv',
-                     'AQThess': 'Air Quality in Thessaloniki GR0018A Station.csv'}
+                     'AQPiraeus': 'Air Quality in Piraeus GR0030A Station.csv'}
     data = pd.read_csv(f'{data_path}{dataset_names[dataset_name]}')
     
     data = convert_to_datetime_and_set_index(data, dataset_name)
     data = remove_columns(data, dataset_name)
+    # data = fill_missing_values(data, dataset_name)
     
     if str(data.index.freq) == '<Day>':
         frequency_yearly_period = 365
