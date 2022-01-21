@@ -25,12 +25,19 @@ def convert_to_datetime_and_set_index(data, dataset_name):
     elif dataset_name == 'AQPiraeus':
         data['datetime'] = pd.to_datetime(data['datetime']).dt.tz_localize(None)
         data = data.set_index('datetime').asfreq('1H')
+    elif dataset_name == 'Jena':
+        data['datetime'] = pd.to_datetime(data['Date Time'])
+        data = data.set_index('datetime')
+        print('Resampling...')
+        data = data.resample('1H').last()
+        data = data.reset_index()
+        data = data.set_index('datetime').asfreq('1H')
     
     # print('Conversion to datetime was successfull. Frequency is', data.index.freq)
     return data
 
 def handle_missing_values(data, dataset_name):
-    if dataset_name == 'AQPiraeus':
+    if dataset_name == 'AQPiraeus' or dataset_name == 'Jena':
         data = data.fillna(-999)
         for variable in data.columns:
             new_col = []
@@ -51,7 +58,7 @@ def handle_missing_values(data, dataset_name):
             data[variable] = data[variable] + new_col
             data[variable] = data[variable].replace(-999, np.nan)
             data[variable] = data[variable].interpolate(method ='linear', limit_direction ='forward')
-        data = data.dropna()
+        data = data.dropna()        
     return data
 
 def remove_columns(data, dataset_name):
@@ -66,7 +73,10 @@ def remove_columns(data, dataset_name):
         # so26chgt, so28chgt were removed because tey have almost always the same values
         # so14chgt had errors in the data
         data = data.drop(columns=['date', 'so14chgt', 'so26chgt', 'so28chgt'])
-        print(f"Columns 'date', 'so14chgt', 'so26chgt', 'so28chgt' were removed from {dataset_name}.")        
+        print(f"Columns 'date', 'so14chgt', 'so26chgt', 'so28chgt' were removed from {dataset_name}.")  
+    elif dataset_name == 'Jena':
+        data = data.drop(columns=['Date Time'])
+        print(f"Column 'Date Time' was removed from {dataset_name}.")  
     return data
         
 def get_stats(df, sort_by='Different Values', sort_how=False, exclude=[]):
@@ -154,19 +164,20 @@ def get_stats(df, sort_by='Different Values', sort_how=False, exclude=[]):
         return mis_val_table_ren_columns
     
 def read_file(dataset_name, data_path='../../data/'):
-    accepted_dataset_names = ['Solcast', 'ERA5', 'ORAS5', 'AQPiraeus']
+    accepted_dataset_names = ['Solcast', 'ERA5', 'ORAS5', 'AQPiraeus', 'Jena']
     if dataset_name not in accepted_dataset_names:
         raise ValueError(f'dataset_name accepted values are {accepted_dataset_names}')
         
     dataset_names = {'Solcast': '40.554572_25.084034_Solcast_PT60M.csv',
                      'ERA5': 'ERA5 daily data on pressure levels from 1950 to 1978.csv',
                      'ORAS5': 'ORAS5 global ocean reanalysis monthly data from 1958 to present.csv',
-                     'AQPiraeus': 'Air Quality in Piraeus GR0030A Station.csv'}
+                     'AQPiraeus': 'Air Quality in Piraeus GR0030A Station.csv',
+                     'Jena': 'jena_climate_2009_2016.csv'}
     data = pd.read_csv(f'{data_path}{dataset_names[dataset_name]}')
     
     data = convert_to_datetime_and_set_index(data, dataset_name)
     data = remove_columns(data, dataset_name)
-    # data = fill_missing_values(data, dataset_name)
+    data = handle_missing_values(data, dataset_name)
     
     if str(data.index.freq) == '<Day>':
         frequency_yearly_period = 365
