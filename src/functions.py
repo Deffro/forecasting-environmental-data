@@ -34,6 +34,12 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data = data.resample('1H').last()
         data = data.reset_index()
         data = data.set_index('datetime').asfreq('1H')
+    elif dataset_name == 'Satellite' or dataset_name == 'NOAA':
+        data['datetime'] = pd.to_datetime(data['date'], format='%Y%m%d')
+        data = data.set_index('datetime').asfreq('1D')
+    elif dataset_name == 'CO2':
+        data['datetime'] = pd.to_datetime(data['Year'], format='%Y')
+        data = data.set_index('datetime').asfreq('YS')
     
     # print('Conversion to datetime was successfull. Frequency is', data.index.freq)
     return data
@@ -78,7 +84,17 @@ def remove_columns(data, dataset_name):
         print(f"Columns 'date', 'so14chgt', 'so26chgt', 'so28chgt' were removed from {dataset_name}.")  
     elif dataset_name == 'Jena':
         data = data.drop(columns=['Date Time'])
-        print(f"Column 'Date Time' was removed from {dataset_name}.")  
+        print(f"Column 'Date Time' was removed from {dataset_name}.") 
+    elif dataset_name == 'Satellite':
+        data = data.drop(columns=['date'])
+        print(f"Column 'date' was removed from {dataset_name}.")            
+    elif dataset_name == 'NOAA':
+        data = data.drop(columns=['Date'])
+        print(f"Column 'Date' was removed from {dataset_name}.")      
+    elif dataset_name == 'CO2':
+        data = data.drop(columns=['Year'])
+        data = data.renmae({'Total': 'CO2'}, ignore_index=True)
+        print(f"Column 'Year' was removed from {dataset_name}.")    
     return data
         
 def get_stats(df, sort_by='Different Values', sort_how=False, exclude=[]):
@@ -166,7 +182,7 @@ def get_stats(df, sort_by='Different Values', sort_how=False, exclude=[]):
         return mis_val_table_ren_columns
     
 def read_file(dataset_name, data_path='../../data/'):
-    accepted_dataset_names = ['Solcast', 'ERA5', 'ORAS5', 'AQPiraeus', 'Jena']
+    accepted_dataset_names = ['Solcast', 'ERA5', 'ORAS5', 'AQPiraeus', 'Jena', 'Satellite', 'NOAA', 'CO2']
     if dataset_name not in accepted_dataset_names:
         raise ValueError(f'dataset_name accepted values are {accepted_dataset_names}')
         
@@ -174,7 +190,10 @@ def read_file(dataset_name, data_path='../../data/'):
                      'ERA5': 'ERA5 daily data on pressure levels from 1950 to 1978.csv',
                      'ORAS5': 'ORAS5 global ocean reanalysis monthly data from 1958 to present.csv',
                      'AQPiraeus': 'Air Quality in Piraeus GR0030A Station.csv',
-                     'Jena': 'jena_climate_2009_2016.csv'}
+                     'Jena': 'jena_climate_2009_2016.csv',
+                     'Satellite': 'Sea level daily gridded data from satellite observations for the global ocean from 1993 to present.csv',
+                     'NOAA': 'FCE_FlamingoRS_ClimDB_data.csv',
+                     'CO2': 'Global CO2 emissions dataset.csv'}
     data = pd.read_csv(f'{data_path}{dataset_names[dataset_name]}')
     
     data = convert_to_datetime_and_set_index(data, dataset_name)
