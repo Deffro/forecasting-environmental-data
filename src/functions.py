@@ -93,7 +93,7 @@ def remove_columns(data, dataset_name):
         print(f"Column 'Date' was removed from {dataset_name}.")      
     elif dataset_name == 'CO2':
         data = data.drop(columns=['Year'])
-        data = data.renmae({'Total': 'CO2'}, ignore_index=True)
+        data = data.rename({'Total': 'CO2'}, axis=1)
         print(f"Column 'Year' was removed from {dataset_name}.")    
     return data
         
@@ -206,7 +206,8 @@ def read_file(dataset_name, data_path='../../data/'):
         frequency_yearly_period = 12
     elif str(data.index.freq) == '<Hour>':
         frequency_yearly_period = 24*365
-    
+    elif str(data.index.freq) == '<YearBegin: month=1>':
+        frequency_yearly_period = 10
     return data, frequency_yearly_period   
 
 
