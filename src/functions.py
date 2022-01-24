@@ -332,16 +332,58 @@ def apply_min_max_scaling(series):
     scaled_data = pd.DataFrame(data=scaled_data, index=series.index)[0]
     return scaled_data, scaler
 
-def remove_trend_by_subtracting_moving_window(series, window=12):
-    rolling_values = series.rolling(window = window).mean()
-    detrended = series - rolling_values
-    # to produce the initial series == detrended+rolling_values
-    return detrended, rolling_values
+class Differencing():
+    def __init__(self, shift=1):
+        self.shift = shift
+    
+    def fit_transform(self, series):
+        self.series = series
+        shifted_series = self.series.shift(periods=self.shift)
+        deseasonalized = self.series - shifted_series
+        return deseasonalized
+    
+    def inverse_transform(self, deseasonalized, test=pd.Series([], dtype=np.float64), y_pred=pd.Series([], dtype=np.float64), fh=1):
+        '''
+        deseasonalized: the deseasonalized data that were created with fit_transform()
+        test:           the test dataset that we want to forecast
+                        if empty, the trained data are inverse transformed only
+        y_pred:         the prediction(s) for the test dataset. these will be in the same scale as the deseasonalized data that was used to train the model
+                        if empty, the trained data are inverse transformed only
+        fh:             the forecasting horizon
+        '''
+        series = pd.concat([self.series, test[:fh]])
+        shifted_series = series.shift(periods=self.shift).values
+        
+        deseasonalized = pd.concat([deseasonalized, y_pred])
+        inverted_series = deseasonalized + shifted_series
+        return inverted_series
+    
 
-def remove_seasonality_by_differencing(series, shift=1):
-    shifted_series = series.shift(periods=shift)
-    deseasonalized = series - shifted_series
-    return deseasonalized, shifted_series
+class MovingAverageSubtraction():
+    def __init__(self, window=12):
+        self.window = window    
+        
+    def fit_transform(self, series):
+        self.series = series
+        rolling_values = self.series.rolling(window = self.window).mean()
+        detrended = self.series - rolling_values
+        return detrended
+    
+    def inverse_transform(self, detrended, test=pd.Series([], dtype=np.float64), y_pred=pd.Series([], dtype=np.float64), fh=1):
+        '''
+        deseasonalized: the detrended data that were created with fit_transform()
+        test:           the test dataset that we want to forecast
+                        if empty, the trained data are inverse transformed only
+        y_pred:         the prediction(s) for the test dataset. these will be in the same scale as the detrended data that was used to train the model
+                        if empty, the trained data are inverse transformed only
+        fh:             the forecasting horizon
+        '''        
+        series = pd.concat([self.series, test[:fh]])
+        rolling_values = series.rolling(window = self.window).mean().values
+        
+        detrended = pd.concat([detrended, y_pred])
+        inverted_series = detrended + rolling_values
+        return inverted_series
 
 def remove_seasonality_by_decomposition(series, model='additive'):
     if model == 'additive':
