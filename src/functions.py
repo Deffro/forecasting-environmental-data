@@ -352,10 +352,13 @@ class Differencing():
                         if empty, the trained data are inverse transformed only
         fh:             the forecasting horizon
         '''
+        self.series = self.series.loc[[i for i in self.series.index if i in deseasonalized.index]]
+        
         series = pd.concat([self.series, test[:fh]])
         shifted_series = series.shift(periods=self.shift).values
         
         deseasonalized = pd.concat([deseasonalized, y_pred])
+        
         inverted_series = deseasonalized + shifted_series
         return inverted_series
     
@@ -379,6 +382,8 @@ class MovingAverageSubtraction():
                         if empty, the trained data are inverse transformed only
         fh:             the forecasting horizon
         '''        
+        self.series = self.series.loc[[i for i in self.series.index if i in detrended.index]]
+        
         series = pd.concat([self.series, test[:fh]])
         rolling_values = series.rolling(window = self.window).mean().values
         
