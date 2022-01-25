@@ -343,22 +343,18 @@ class Differencing():
         deseasonalized = self.series - shifted_series
         return deseasonalized
     
-    def inverse_transform(self, deseasonalized, test=pd.Series([], dtype=np.float64), y_pred=pd.Series([], dtype=np.float64), fh=1):
+    def inverse_transform(self, deseasonalized, y_pred=pd.Series([], dtype=np.float64), fh=1):
         '''
         deseasonalized: the deseasonalized data that were created with fit_transform()
-        test:           the test dataset that we want to forecast
-                        if empty, the trained data are inverse transformed only
         y_pred:         the prediction(s) for the test dataset. these will be in the same scale as the deseasonalized data that was used to train the model
                         if empty, the trained data are inverse transformed only
         fh:             the forecasting horizon
         '''
         self.series = self.series.loc[[i for i in self.series.index if i in deseasonalized.index]]
         
-        series = pd.concat([self.series, test[:fh]])
+        series = pd.concat([self.series, pd.Series(data=[np.nan])])
         shifted_series = series.shift(periods=self.shift).values
-        
         deseasonalized = pd.concat([deseasonalized, y_pred])
-        
         inverted_series = deseasonalized + shifted_series
         return inverted_series
     
@@ -373,18 +369,16 @@ class MovingAverageSubtraction():
         detrended = self.series - rolling_values
         return detrended
     
-    def inverse_transform(self, detrended, test=pd.Series([], dtype=np.float64), y_pred=pd.Series([], dtype=np.float64), fh=1):
+    def inverse_transform(self, detrended, dtype=np.float64), y_pred=pd.Series([], dtype=np.float64), fh=1):
         '''
         deseasonalized: the detrended data that were created with fit_transform()
-        test:           the test dataset that we want to forecast
-                        if empty, the trained data are inverse transformed only
         y_pred:         the prediction(s) for the test dataset. these will be in the same scale as the detrended data that was used to train the model
                         if empty, the trained data are inverse transformed only
         fh:             the forecasting horizon
         '''        
         self.series = self.series.loc[[i for i in self.series.index if i in detrended.index]]
         
-        series = pd.concat([self.series, test[:fh]])
+        series = pd.concat([self.series, pd.Series(data=[np.nan])])
         rolling_values = series.rolling(window = self.window).mean().values
         
         detrended = pd.concat([detrended, y_pred])
