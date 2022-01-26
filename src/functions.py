@@ -1,7 +1,8 @@
+import os
 import time
 import numpy as np
 import pandas as pd
-
+from tqdm import tqdm
 import statsmodels.api as sm
 import pymannkendall as mk
 from scipy.stats import kruskal
@@ -39,9 +40,12 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data = data.resample('1H').last()
         data = data.reset_index()
         data = data.set_index('datetime').asfreq('1H')
-    elif dataset_name == 'Satellite' or dataset_name == 'NOAA':
+    elif dataset_name == 'NOAA':
         data['datetime'] = pd.to_datetime(data['Date'], format='%Y%m%d')
         data = data.set_index('datetime').asfreq('1D')
+    elif dataset_name == 'Satellite':
+        data['datetime'] = pd.to_datetime(data['date'], format='%Y%m%d')
+        data = data.set_index('datetime').asfreq('1D')        
     elif dataset_name == 'CO2':
         data['datetime'] = pd.to_datetime(data['Year'], format='%Y')
         data = data.set_index('datetime').asfreq('YS')
