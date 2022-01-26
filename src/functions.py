@@ -35,7 +35,7 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data = data.reset_index()
         data = data.set_index('datetime').asfreq('1H')
     elif dataset_name == 'Satellite' or dataset_name == 'NOAA':
-        data['datetime'] = pd.to_datetime(data['date'], format='%Y%m%d')
+        data['datetime'] = pd.to_datetime(data['Date'], format='%Y%m%d')
         data = data.set_index('datetime').asfreq('1D')
     elif dataset_name == 'CO2':
         data['datetime'] = pd.to_datetime(data['Year'], format='%Y')
@@ -403,3 +403,75 @@ def find_if_series_is_additive_or_multiplicative(series, variable_name, window=1
         print(f'{variable_name}: std_of_seasonal is {std_of_seasonal}. Maybe consider multiplicative.')
     else:
         print(f'{variable_name}: std_of_seasonal is {std_of_seasonal}. Maybe consider additive.')
+        
+### Modeling ###        
+
+def train_valid_test_split(dataset_name, data):
+    if dataset_name == 'ORAS5':
+        train_test_split_date = '2009-01'
+        train_valid_split_date = '2003-01'
+        train = data.loc[data.index < train_test_split_date]
+        valid = train.loc[train.index >= train_valid_split_date]
+        train_without_valid = data.loc[data.index < train_valid_split_date]
+        test = data.loc[data.index >= train_test_split_date]
+    elif dataset_name == 'ERA5':
+        train_test_split_date = '1977-01-01'
+        train_valid_split_date = '1975-01-01'
+        train = data.loc[data.index < train_test_split_date]
+        valid = train.loc[train.index >= train_valid_split_date]
+        train_without_valid = data.loc[data.index < train_valid_split_date]
+        test = data.loc[data.index >= train_test_split_date]
+    elif dataset_name == 'Solcast':
+        train_test_split_date = '2020-01-01'
+        train_valid_split_date = '2018-01-01'
+        train = data.loc[data.index < train_test_split_date]
+        valid = train.loc[train.index >= train_valid_split_date]
+        train_without_valid = data.loc[data.index < train_valid_split_date]
+        test = data.loc[data.index >= train_test_split_date]
+    elif dataset_name = 'AQPiraeus'   
+        train_test_split_date = '2020-08-01'
+        train_valid_split_date = '2020-03-01'
+        train = data.loc[data.index < train_test_split_date]
+        valid = train.loc[train.index >= train_valid_split_date]
+        train_without_valid = data.loc[data.index < train_valid_split_date]
+        test = data.loc[data.index >= train_test_split_date]
+    elif dataset_name = 'Jena':   
+        train_test_split_date = '2016-01-01'
+        train_valid_split_date = '2015-01-01'
+        train = data.loc[data.index < train_test_split_date]
+        valid = train.loc[train.index >= train_valid_split_date]
+        train_without_valid = data.loc[data.index < train_valid_split_date]
+        test = data.loc[data.index >= train_test_split_date]
+    elif dataset_name = 'Satellite':
+        train_test_split_date = '2018-01-01'
+        train_valid_split_date = '2015-01-01'
+        train = data.loc[data.index < train_test_split_date]
+        valid = train.loc[train.index >= train_valid_split_date]
+        train_without_valid = data.loc[data.index < train_valid_split_date]
+        test = data.loc[data.index >= train_test_split_date]
+    elif dataset_name = 'NOAA':
+        train_test_split_date = '2013-01-01'
+        train_valid_split_date = '2006-01-01'
+        train = data.loc[data.index < train_test_split_date]
+        valid = train.loc[train.index >= train_valid_split_date]
+        train_without_valid = data.loc[data.index < train_valid_split_date]
+        test = data.loc[data.index >= train_test_split_date]    
+    elif dataset_name = 'CO2':        
+        train_test_split_date = '1992-01-01'
+        train_valid_split_date = '1963-01-01'
+        train = data.loc[data.index < train_test_split_date]
+        valid = train.loc[train.index >= train_valid_split_date]
+        train_without_valid = data.loc[data.index < train_valid_split_date]
+        test = data.loc[data.index >= train_test_split_date]
+
+    print(f"train datetime margins              : {str(train.index.min())} - {str(train.index.max())}. \
+    Total samples: {train.shape[0]} ({100*train.shape[0]/data.shape[0]:.1f}%)")
+    print(f"test datetime margins               : {str(test.index.min())} - {str(test.index.max())}. \
+    Total samples: {test.shape[0]} ({100*test.shape[0]/data.shape[0]:.1f}%)")
+
+    print(f"valid datetime margins              : {str(valid.index.min())} - {str(valid.index.max())}. \
+    Total samples: {valid.shape[0]} ({100*valid.shape[0]/data.shape[0]:.1f}%)")
+    print(f"train_without_valid datetime margins: {str(train_without_valid.index.min())} - {str(train_without_valid.index.max())}. \
+    Total samples: {train_without_valid.shape[0]} ({100*train_without_valid.shape[0]/data.shape[0]:.1f}%)")        
+    
+    return train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date
