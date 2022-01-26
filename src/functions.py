@@ -10,6 +10,11 @@ from statsmodels.tsa.stattools import adfuller
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sklearn.preprocessing import MinMaxScaler
 
+from sktime.utils.validation.forecasting import check_fh
+from sktime.forecasting.model_evaluation._functions import _split
+from sktime.forecasting.base._fh import ForecastingHorizon
+from sklearn.base import clone
+
 ### Read Functions ###
 
 def convert_to_datetime_and_set_index(data, dataset_name):
@@ -428,35 +433,35 @@ def train_valid_test_split(dataset_name, data):
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]
-    elif dataset_name = 'AQPiraeus'   
+    elif dataset_name == 'AQPiraeus':
         train_test_split_date = '2020-08-01'
         train_valid_split_date = '2020-03-01'
         train = data.loc[data.index < train_test_split_date]
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]
-    elif dataset_name = 'Jena':   
+    elif dataset_name == 'Jena':   
         train_test_split_date = '2016-01-01'
         train_valid_split_date = '2015-01-01'
         train = data.loc[data.index < train_test_split_date]
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]
-    elif dataset_name = 'Satellite':
+    elif dataset_name == 'Satellite':
         train_test_split_date = '2018-01-01'
         train_valid_split_date = '2015-01-01'
         train = data.loc[data.index < train_test_split_date]
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]
-    elif dataset_name = 'NOAA':
+    elif dataset_name == 'NOAA':
         train_test_split_date = '2013-01-01'
         train_valid_split_date = '2006-01-01'
         train = data.loc[data.index < train_test_split_date]
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]    
-    elif dataset_name = 'CO2':        
+    elif dataset_name == 'CO2':        
         train_test_split_date = '1992-01-01'
         train_valid_split_date = '1963-01-01'
         train = data.loc[data.index < train_test_split_date]
@@ -475,3 +480,79 @@ def train_valid_test_split(dataset_name, data):
     Total samples: {train_without_valid.shape[0]} ({100*train_without_valid.shape[0]/data.shape[0]:.1f}%)")        
     
     return train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date
+
+def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, preprocess=False, frequency_yearly_period=None):
+    
+    ### Initialize dataframe ###
+    results = pd.DataFrame()
+    
+    ### Run temporal cross-validation ###
+    for i, (train, test) in enumerate(tqdm(cv.split(y))):
+        # split data
+        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
+        
+        ### transformations on the train ###
+        if preprocess is True:
+            # moving average
+            moving_average = MovingAverageSubtraction(window=frequency_yearly_period)
+            y_train = moving_average.fit_transform(y_train)
+
+            # differencing
+            differenciator = Differencing(shift=1)
+            y_train = differenciator.fit_transform(y_train)
+
+        ### min max scaling always ###
+        y_train, scaler = apply_min_max_scaling(y_train)
+
+        y_train = y_train.dropna()
+            
+        ### create forecasting horizon ##
+        fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+        ### fit ##
+        start_fit = time.perf_counter()
+        if i == 0:
+            forecaster = clone(forecaster)
+            forecaster.fit(y_train, fh=fh)
+        fit_time = time.perf_counter() - start_fit
+
+        ### predict ##
+        start_pred = time.perf_counter()
+        y_pred = forecaster.predict(fh)
+
+        ### inverse transform ##
+        # min max scaling always
+        y_pred = pd.Series(data=scaler.inverse_transform(y_pred.values.reshape(-1, 1))[0], index=y_pred.index)
+        
+        if preprocess is True:
+            # difference
+            y_pred = differenciator.inverse_transform(y_pred, fh=cv.fh)
+            
+            # moving average
+            y_pred = moving_average.inverse_transform(y_pred, fh=cv.fh)           
+        pred_time = time.perf_counter() - start_pred
+
+        
+        ### score ##
+        score = scoring(y_test, y_pred, y_train=y_train)
+
+        ### save results ##
+        results = results.append(
+            {
+                'score': score,
+                "fit_time": fit_time,
+                "pred_time": pred_time,
+                "len_train_window": len(y_train),
+                "cutoff": forecaster.cutoff,
+                "y_train": y_train if return_data else np.nan,
+                "y_test": y_test if return_data else np.nan,
+                "y_pred": y_pred if return_data else np.nan,
+            },
+            ignore_index=True,
+        )
+
+    ### post-processing of results ###
+    if not return_data:
+        results = results.drop(columns=["y_train", "y_test", "y_pred"])
+    results["len_train_window"] = results["len_train_window"].astype(int)
+    return results
