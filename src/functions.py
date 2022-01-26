@@ -334,6 +334,7 @@ def apply_min_max_scaling(series):
     return scaled_data, scaler
 
 class Differencing():
+    # TODO: fh > 1 ?
     def __init__(self, shift=1):
         self.shift = shift
     
@@ -343,47 +344,35 @@ class Differencing():
         deseasonalized = self.series - shifted_series
         return deseasonalized
     
-    def inverse_transform(self, deseasonalized, y_pred=pd.Series([], dtype=np.float64), fh=1):
+    def inverse_transform(self, y_pred, fh=1):
         '''
-        deseasonalized: the deseasonalized data that were created with fit_transform()
+        Add to the y_pred, which is scaled, the previous value of y_train, which is in the initial scal
         y_pred:         the prediction(s) for the test dataset. these will be in the same scale as the deseasonalized data that was used to train the model
-                        if empty, the trained data are inverse transformed only
         fh:             the forecasting horizon
         '''
-        self.series = self.series.loc[[i for i in self.series.index if i in deseasonalized.index]]
-        
-        series = pd.concat([self.series, pd.Series(data=[np.nan])])
-        shifted_series = series.shift(periods=self.shift).values
-        deseasonalized = pd.concat([deseasonalized, y_pred])
-        inverted_series = deseasonalized + shifted_series
-        return inverted_series
+        return self.series[-self.shift:].values + y_pred
     
 
 class MovingAverageSubtraction():
+    # TODO: fh > 1 ?
     def __init__(self, window=12):
         self.window = window    
         
     def fit_transform(self, series):
         self.series = series
-        rolling_values = self.series.rolling(window = self.window).mean()
+        # doesn't use current value for the rolling computation. only previous -> closed='left'
+        rolling_values = self.series.rolling(window = self.window, closed='left').mean()
         detrended = self.series - rolling_values
         return detrended
     
-    def inverse_transform(self, detrended, dtype=np.float64), y_pred=pd.Series([], dtype=np.float64), fh=1):
+    def inverse_transform(self, y_pred, fh=1):
         '''
-        deseasonalized: the detrended data that were created with fit_transform()
+        Add to the y_pred, which is scaled, the mean of the previous window values of y_train, which are in the initial scale
+
         y_pred:         the prediction(s) for the test dataset. these will be in the same scale as the detrended data that was used to train the model
-                        if empty, the trained data are inverse transformed only
         fh:             the forecasting horizon
         '''        
-        self.series = self.series.loc[[i for i in self.series.index if i in detrended.index]]
-        
-        series = pd.concat([self.series, pd.Series(data=[np.nan])])
-        rolling_values = series.rolling(window = self.window).mean().values
-        
-        detrended = pd.concat([detrended, y_pred])
-        inverted_series = detrended + rolling_values
-        return inverted_series
+        return self.series[-self.window:].mean() + y_pred
 
 def remove_seasonality_by_decomposition(series, model='additive'):
     if model == 'additive':
