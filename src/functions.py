@@ -211,13 +211,17 @@ def read_file(dataset_name, data_path='../../data/'):
     
     if str(data.index.freq) == '<Day>':
         frequency_yearly_period = 365
+        freq_sktime = 'D'
     elif str(data.index.freq) == '<MonthBegin>':
         frequency_yearly_period = 12
+        freq_sktime = 'M'
     elif str(data.index.freq) == '<Hour>':
         frequency_yearly_period = 24*365
+        freq_sktime = 'H'
     elif str(data.index.freq) == '<YearBegin: month=1>':
         frequency_yearly_period = 10
-    return data, frequency_yearly_period   
+        freq_sktime = 'Y'
+    return data, frequency_yearly_period, freq_sktime 
 
 
 ### Pre-processing Tests Functions ###
