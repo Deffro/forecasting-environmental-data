@@ -219,7 +219,7 @@ def read_file(dataset_name, data_path='../../data/'):
         frequency_yearly_period = 24*365
         freq_sktime = 'H'
     elif str(data.index.freq) == '<YearBegin: month=1>':
-        frequency_yearly_period = 10
+        frequency_yearly_period = 1
         freq_sktime = 'Y'
     return data, frequency_yearly_period, freq_sktime 
 
