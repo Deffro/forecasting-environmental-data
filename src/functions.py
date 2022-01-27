@@ -14,7 +14,6 @@ from sklearn.preprocessing import MinMaxScaler
 from sktime.utils.validation.forecasting import check_fh
 from sktime.forecasting.model_evaluation._functions import _split
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sklearn.base import clone
 
 ### Read Functions ###
 
@@ -492,7 +491,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
     results = pd.DataFrame()
     
     ### Run temporal cross-validation ###
-    for i, (train, test) in enumerate(tqdm(cv.split(y))):
+    for train, test in tqdm(cv.split(y)):
         # split data
         y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
         
@@ -507,7 +506,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
             y_train = differenciator.fit_transform(y_train)
 
         ### min max scaling always ###
-        y_train, scaler = apply_min_max_scaling(y_train)
+        # y_train, scaler = apply_min_max_scaling(y_train)
 
         y_train = y_train.dropna()
             
@@ -516,9 +515,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
 
         ### fit ##
         start_fit = time.perf_counter()
-        if i == 0:
-            forecaster = clone(forecaster)
-            forecaster.fit(y_train, fh=fh)
+        forecaster.fit(y_train, fh=fh)
         fit_time = time.perf_counter() - start_fit
 
         ### predict ##
@@ -527,7 +524,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
 
         ### inverse transform ##
         # min max scaling always
-        y_pred = pd.Series(data=scaler.inverse_transform(y_pred.values.reshape(-1, 1))[0], index=y_pred.index)
+        # y_pred = pd.Series(data=scaler.inverse_transform(y_pred.values.reshape(-1, 1))[0], index=y_pred.index)
         
         if preprocess is True:
             # difference
