@@ -23,30 +23,37 @@ def convert_to_datetime_and_set_index(data, dataset_name):
     if dataset_name == 'Solcast':
         data['datetime'] = pd.to_datetime(data['PeriodEnd']).dt.tz_localize(None)
         data = data.set_index('datetime').asfreq('1H')
+        data = data.resample('1D').mean()
     elif dataset_name == 'ERA5':
         data['date'] = data['date'].apply(lambda x: x.split('-')[0]+x.split('-')[1]+'19'+x.split('-')[2])
         data['datetime']= pd.to_datetime(data['date'], format='%d%m%Y')
         data = data.set_index('datetime').asfreq('1D')
+        data = data.resample('1MS').mean()
     elif dataset_name == 'ORAS5':
         data['datetime']= pd.to_datetime(data['date'], format='%Y%m')
         data = data.set_index('datetime').asfreq('1MS')    
     elif dataset_name == 'AQPiraeus':
         data['datetime'] = pd.to_datetime(data['datetime']).dt.tz_localize(None)
         data = data.set_index('datetime').asfreq('1H')
+        # handle missing values before resampling
+        data = handle_missing_values(data, dataset_name)
+        data = data.resample('1D').mean()
     elif dataset_name == 'Jena':
         data['datetime'] = pd.to_datetime(data['Date Time'])
         data = data.set_index('datetime')
-        print('Resampling...')
-        data = data.resample('1H').last()
+        data = data.resample('1H').mean()
+        data = handle_missing_values(data, dataset_name)
+        data = data.resample('1D').mean()
         data = data.reset_index()
-        data = data.set_index('datetime').asfreq('1H')
+        data = data.set_index('datetime').asfreq('1D')
     elif dataset_name == 'NOAA':
         data['datetime'] = pd.to_datetime(data['Date'], format='%Y%m%d')
         data = data.set_index('datetime').asfreq('1D')
+        data = data.resample('1MS').mean()
     elif dataset_name == 'Satellite':
         data['datetime'] = pd.to_datetime(data['date'], format='%Y%m%d')
         data = data.set_index('datetime').asfreq('1D')        
-
+        data = data.resample('1MS').mean()
     
     # print('Conversion to datetime was successfull. Frequency is', data.index.freq)
     return data
@@ -79,19 +86,13 @@ def handle_missing_values(data, dataset_name):
 def remove_columns(data, dataset_name):
     if dataset_name == 'Solcast':
         # SnowWater was removed because it is almost always 0
-        data = data.drop(columns=['PeriodEnd', 'PeriodStart', 'Period', 'SnowWater'])
-        print(f"Columns 'PeriodEnd', 'PeriodStart', 'Period', 'SnowWater' were removed from {dataset_name}.")
-    elif dataset_name == 'ERA5':
-        data = data.drop(columns=['date'])
-        print(f"Columns 'date' were removed from {dataset_name}.")
+        data = data.drop(columns=['SnowWater'])
+        print(f"Column 'SnowWater' were removed from {dataset_name}.")
     elif dataset_name == 'ORAS5':
         # so26chgt, so28chgt were removed because tey have almost always the same values
         # so14chgt had errors in the data
         data = data.drop(columns=['date', 'so14chgt', 'so26chgt', 'so28chgt'])
         print(f"Columns 'date', 'so14chgt', 'so26chgt', 'so28chgt' were removed from {dataset_name}.")  
-    elif dataset_name == 'Jena':
-        data = data.drop(columns=['Date Time'])
-        print(f"Column 'Date Time' was removed from {dataset_name}.") 
     elif dataset_name == 'Satellite':
         data = data.drop(columns=['date'])
         print(f"Column 'date' was removed from {dataset_name}.")            
@@ -201,12 +202,12 @@ def read_file(dataset_name, data_path='../../data/'):
     
     data = convert_to_datetime_and_set_index(data, dataset_name)
     data = remove_columns(data, dataset_name)
-    data = handle_missing_values(data, dataset_name)
+    
     
     if str(data.index.freq) == '<Day>':
         frequency_yearly_period = 365
         freq_sktime = 'D'
-    elif str(data.index.freq) == '<MonthBegin>':
+    elif str(data.index.freq) == '<MonthBegin>' or str(data.index.freq) == '<MonthEnd>':
         frequency_yearly_period = 12
         freq_sktime = 'M'
     elif str(data.index.freq) == '<Hour>':
