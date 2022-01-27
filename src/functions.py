@@ -506,7 +506,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
             y_train = differenciator.fit_transform(y_train)
 
         ### min max scaling always ###
-        # y_train, scaler = apply_min_max_scaling(y_train)
+        y_train, scaler = apply_min_max_scaling(y_train)
 
         y_train = y_train.dropna()
             
@@ -524,7 +524,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
 
         ### inverse transform ##
         # min max scaling always
-        # y_pred = pd.Series(data=scaler.inverse_transform(y_pred.values.reshape(-1, 1))[0], index=y_pred.index)
+        y_pred = pd.Series(data=scaler.inverse_transform(y_pred.values.reshape(-1, 1))[0], index=y_pred.index)
         
         if preprocess is True:
             # difference
