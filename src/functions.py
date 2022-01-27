@@ -24,6 +24,7 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data['datetime'] = pd.to_datetime(data['PeriodEnd']).dt.tz_localize(None)
         data = data.set_index('datetime').asfreq('1H')
         data = data.resample('1D').mean()
+        data = data.loc[data.index < '2022-01-01']
     elif dataset_name == 'ERA5':
         data['date'] = data['date'].apply(lambda x: x.split('-')[0]+x.split('-')[1]+'19'+x.split('-')[2])
         data['datetime']= pd.to_datetime(data['date'], format='%d%m%Y')
