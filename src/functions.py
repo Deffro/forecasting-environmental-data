@@ -42,6 +42,7 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data['datetime'] = pd.to_datetime(data['Date Time'])
         data = data.set_index('datetime')
         data = data.resample('1H').mean()
+        # handle missing values before resampling
         data = handle_missing_values(data, dataset_name)
         data = data.resample('1D').mean()
         data = data.reset_index()
@@ -49,6 +50,8 @@ def convert_to_datetime_and_set_index(data, dataset_name):
     elif dataset_name == 'NOAA':
         data['datetime'] = pd.to_datetime(data['Date'], format='%Y%m%d')
         data = data.set_index('datetime').asfreq('1D')
+        # handle missing values before resampling
+        data = handle_missing_values(data, dataset_name)
         data = data.resample('1MS').mean()
     elif dataset_name == 'Satellite':
         data['datetime'] = pd.to_datetime(data['date'], format='%Y%m%d')
@@ -80,7 +83,11 @@ def handle_missing_values(data, dataset_name):
             data[variable] = data[variable] + new_col
             data[variable] = data[variable].replace(-999, np.nan)
             data[variable] = data[variable].interpolate(method ='linear', limit_direction ='forward')
-        data = data.dropna()        
+        data = data.dropna() 
+    elif dataset_name == 'NOAA':
+        for variable in data.columns:
+            data[variable] = data[variable].replace(-9999, np.nan)
+            data[variable] = data[variable].interpolate(method ='linear', limit_direction ='forward')
     return data
 
 def remove_columns(data, dataset_name):
