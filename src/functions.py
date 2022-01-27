@@ -48,6 +48,7 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data = data.resample('1D').mean()
         data = data.reset_index()
         data = data.set_index('datetime').asfreq('1D')
+        data = data.loc[data.index < '2017-01-01']
     elif dataset_name == 'NOAA':
         data['datetime'] = pd.to_datetime(data['Date'], format='%Y%m%d')
         data = data.set_index('datetime').asfreq('1D')
