@@ -350,7 +350,6 @@ def apply_min_max_scaling(series):
     return scaled_data, scaler
 
 class Differencing():
-    # TODO: fh > 1 ?
     def __init__(self, shift=1):
         self.shift = shift
     
@@ -360,17 +359,21 @@ class Differencing():
         deseasonalized = self.series - shifted_series
         return deseasonalized
     
-    def inverse_transform(self, y_pred, fh=1):
+    def inverse_transform(self, y_pred):
         '''
-        Add to the y_pred, which is scaled, the previous value of y_train, which is in the initial scal
+        Add to the y_pred, which is scaled, the previous value of y_train, which is in the initial scale
+        
+        If z are the differenced data and y the original, then:
+        y(t+1) = y(t) + z(t+1)
+        y(t+2) = y(t+1) + z(t+2) = y(t) + z(t+1) + z(t+2)
+
         y_pred:         the prediction(s) for the test dataset. these will be in the same scale as the deseasonalized data that was used to train the model
         fh:             the forecasting horizon
         '''
-        return self.series[-self.shift:].values + y_pred
+        last_known_ytrain_value = self.series[-self.shift:].values
+        return [last_known_ytrain_value + i for i in y_pred.cumsum()]
     
-
 class MovingAverageSubtraction():
-    # TODO: fh > 1 ?
     def __init__(self, window=12):
         self.window = window    
         
@@ -381,14 +384,15 @@ class MovingAverageSubtraction():
         detrended = self.series - rolling_values
         return detrended
     
-    def inverse_transform(self, y_pred, fh=1):
+    def inverse_transform(self, y_pred):
         '''
         Add to the y_pred, which is scaled, the mean of the previous window values of y_train, which are in the initial scale
 
         y_pred:         the prediction(s) for the test dataset. these will be in the same scale as the detrended data that was used to train the model
         fh:             the forecasting horizon
-        '''        
-        return self.series[-self.window:].mean() + y_pred
+        '''   
+        last_known_ytrain_value = self.series[-self.window:].mean()
+        return last_known_ytrain_value + np.sum(y_pred)
 
 def remove_seasonality_by_decomposition(series, model='additive'):
     if model == 'additive':
@@ -509,36 +513,37 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
         y_train, scaler = apply_min_max_scaling(y_train)
 
         y_train = y_train.dropna()
-            
-        ### create forecasting horizon ##
-        fh = ForecastingHorizon(y_test.index, is_relative=False)
 
-        ### fit ##
+        ### fit ###
         start_fit = time.perf_counter()
-        forecaster.fit(y_train, fh=fh)
+        forecaster.fit(y_train, fh=cv.fh)
         fit_time = time.perf_counter() - start_fit
-
-        ### predict ##
+    
+        ### predict ###
         start_pred = time.perf_counter()
-        y_pred = forecaster.predict(fh)
-
-        ### inverse transform ##
+        # forecast for each step until the last fh. we need these values to scale back from differencing and moving average
+        y_pred_until_last_fh = forecaster.predict(fh=[i+1 for i in range (cv.fh)])
+        y_pred = y_pred_until_last_fh[-1:] # the last forecast for the requested fh
+        
+        
+        ### inverse transform ###
         # min max scaling always
-        y_pred = pd.Series(data=scaler.inverse_transform(y_pred.values.reshape(-1, 1))[0], index=y_pred.index)
+        y_pred = pd.Series(data=[i[0] for i in scaler.inverse_transform(y_pred.values.reshape(-1, 1))], index=y_pred.index)
+        y_pred_until_last_fh = pd.Series(data=[i[0] for i in scaler.inverse_transform(y_pred_until_last_fh.values.reshape(-1, 1))], index=y_pred_until_last_fh.index)
         
         if preprocess is True:
             # difference
-            y_pred = differenciator.inverse_transform(y_pred, fh=cv.fh)
+            y_pred_until_last_fh = differenciator.inverse_transform(y_pred_until_last_fh)
             
             # moving average
-            y_pred = moving_average.inverse_transform(y_pred, fh=cv.fh)           
+            y_pred = moving_average.inverse_transform(y_pred_until_last_fh)   
+            y_pred = pd.Series(index=y_test.index, data=y_pred)
         pred_time = time.perf_counter() - start_pred
 
-        
-        ### score ##
+        ### score ###
         score = scoring(y_test, y_pred, y_train=y_train)
 
-        ### save results ##
+        ### save results ###
         results = results.append(
             {
                 'score': score,
