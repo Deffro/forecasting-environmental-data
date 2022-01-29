@@ -493,7 +493,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, 
     
     ### Check metric names ### 
     accepted_metrics = ['MAE', 'RMSE', 'MASE', 'sMAPE']
-    for m in metrics:
+    for m in metrics.keys():
         if m not in accepted_metrics:
             raise ValueError(f'dataset_name accepted values are {accepted_metrics}')
     
@@ -548,17 +548,15 @@ def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, 
 
         ### score ###
         scores = {}
-        for metric_name in metrics:
+        for metric_name in metrics.keys():
             if metric_name == 'MAE':
-                scores[metric_name] = mae(y_test, y_pred)            
+                scores[metric_name] = metrics[metric_name](y_test, y_pred)            
             if metric_name == 'RMSE':
-                scores[metric_name] = rmse(y_test, y_pred)
+                scores[metric_name] = metrics[metric_name](y_test, y_pred)
             if metric_name == 'sMAPE':
-                scores[metric_name] = smape(y_test, y_pred, symmetric=True)                
+                scores[metric_name] = metrics[metric_name](y_test, y_pred, symmetric=True)                
             if metric_name == 'MASE':
-                scores[metric_name] = mase(y_test, y_pred, y_train=y_train)   
-            if metric_name == 'R2':
-                scores[metric_name] = r2_score(y_test, y_pred)
+                scores[metric_name] = metrics[metric_name](y_test, y_pred, y_train=y_train)   
                 
         ### save results ###
         results = results.append(
