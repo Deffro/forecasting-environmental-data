@@ -489,7 +489,13 @@ def train_valid_test_split(dataset_name, data):
     
     return train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date
 
-def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, preprocess=False, frequency_yearly_period=None):
+def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, preprocess=False, frequency_yearly_period=None):
+    
+    ### Check metric names ### 
+    accepted_metrics = ['MAE', 'RMSE', 'MASE', 'sMAPE']
+    for m in metrics:
+        if m not in accepted_metrics:
+            raise ValueError(f'dataset_name accepted values are {accepted_metrics}')
     
     ### Initialize dataframe ###
     results = pd.DataFrame()
@@ -541,12 +547,22 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
         pred_time = time.perf_counter() - start_pred
 
         ### score ###
-        score = scoring(y_test, y_pred, y_train=y_train)
-
+        scores = {}
+        for metric_name in metrics:
+            if metric_name == 'MAE':
+                scores[metric_name] = mae(y_test, y_pred)            
+            if metric_name == 'RMSE':
+                scores[metric_name] = rmse(y_test, y_pred)
+            if metric_name == 'sMAPE':
+                scores[metric_name] = smape(y_test, y_pred, symmetric=True)                
+            if metric_name == 'MASE':
+                scores[metric_name] = mase(y_test, y_pred, y_train=y_train)   
+            if metric_name == 'R2':
+                scores[metric_name] = r2_score(y_test, y_pred)
+                
         ### save results ###
         results = results.append(
             {
-                'score': score,
                 "fit_time": fit_time,
                 "pred_time": pred_time,
                 "len_train_window": len(y_train),
@@ -557,6 +573,8 @@ def evaluate_sktime(forecaster, cv, y, X=None, scoring=None, return_data=False, 
             },
             ignore_index=True,
         )
+        for k, v in scores.items():
+            results.at[results.index.max(), k] = v
 
     ### post-processing of results ###
     if not return_data:
