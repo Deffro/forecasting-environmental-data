@@ -9,6 +9,7 @@ rdok.pem
 
 # Folders
 results/
+mlruns/
 
 # Jupyter notebook
 notebooks_effro/
