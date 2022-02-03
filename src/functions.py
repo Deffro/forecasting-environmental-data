@@ -15,6 +15,8 @@ from sktime.utils.validation.forecasting import check_fh
 from sktime.forecasting.model_evaluation._functions import _split
 from sktime.forecasting.base._fh import ForecastingHorizon
 
+from sktime.performance_metrics.forecasting import MeanSquaredError, MeanAbsoluteScaledError, mean_absolute_percentage_error, MeanAbsoluteError
+from epftoolbox.evaluation import MASE
 ### Read Functions ###
 
 def convert_to_datetime_and_set_index(data, dataset_name):
@@ -493,7 +495,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, 
     
     ### Check metric names ### 
     accepted_metrics = ['MAE', 'RMSE', 'MASE', 'sMAPE']
-    for m in metrics.keys():
+    for m in metrics:
         if m not in accepted_metrics:
             raise ValueError(f'dataset_name accepted values are {accepted_metrics}')
     
@@ -504,7 +506,7 @@ def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, 
     for train, test in tqdm(cv.split(y)):
         # split data
         y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
-        
+        y_train_ = y_train.copy()
         ### transformations on the train ###
         if preprocess is True:
             # moving average
@@ -548,15 +550,18 @@ def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, 
 
         ### score ###
         scores = {}
-        for metric_name in metrics.keys():
+        for metric_name in metrics:
             if metric_name == 'MAE':
-                scores[metric_name] = metrics[metric_name](y_test, y_pred)            
+                mae = MeanAbsoluteError()
+                scores[metric_name] = mae(y_test, y_pred)            
             if metric_name == 'RMSE':
-                scores[metric_name] = metrics[metric_name](y_test, y_pred)
+                rmse = MeanSquaredError(square_root=True)
+                scores[metric_name] = rmse(y_test, y_pred)
             if metric_name == 'sMAPE':
-                scores[metric_name] = metrics[metric_name](y_test, y_pred, symmetric=True)                
+                scores[metric_name] = mean_absolute_percentage_error(y_test, y_pred, symmetric=True)                
             if metric_name == 'MASE':
-                scores[metric_name] = metrics[metric_name](y_test, y_pred, y_train=y_train)   
+                mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+                scores[metric_name] = mase(y_test, y_pred, y_train=y_train_)   
                 
         ### save results ###
         results = results.append(
