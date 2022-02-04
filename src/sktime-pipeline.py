@@ -38,13 +38,13 @@ import argparse
 parser = argparse.ArgumentParser(description='Pipeline for sktime Classical and ML algorithms. No preprocessing, No tuning.')
 parser.add_argument('dataset_name', help='Dataset Name')
 parser.add_argument('sample', help='valid or test')
+parser.add_argument('fh', help='forecasting horizon. int')
 
 args = parser.parse_args()
 dataset_name = args.dataset_name
 sample = args.sample
+fh = int(args.fh)
 
-# define forecastin horizon
-fh=1
 
 # Read Data
 #dataset_name = 'Solcast'
