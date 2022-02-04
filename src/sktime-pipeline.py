@@ -37,9 +37,11 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Pipeline for sktime Classical and ML algorithms. No preprocessing, No tuning.')
 parser.add_argument('dataset_name', help='Dataset Name')
+parser.add_argument('sample', help='valid or test')
 
 args = parser.parse_args()
 dataset_name = args.dataset_name
+sample = args.sample
 
 # define forecastin horizon
 fh=1
@@ -82,68 +84,133 @@ forecasters = [
 data['datetime'] = data.index
 data.index = pd.PeriodIndex(data.index, freq=freq_sktime)
 
-for target in data.columns:
-    print('#'*70, target, '#'*70)
-    
-    # split data
-    train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date = train_valid_test_split(dataset_name, data)
+if sample == 'valid':
 
-    # save prediction in a df. a column per method
-    predictions_valid = pd.DataFrame()
-    predictions_valid['datetime'] = valid['datetime']
-    predictions_valid['true_values'] = valid[target]
+    for target in data.drop(columns=['datetime']).columns:
+        print('#'*70, target, '#'*70)
 
-    # expanding window to fit test data
-    cv = ExpandingWindowSplitter(step_length=1, fh=fh, initial_window=train_without_valid.shape[0])
+        # split data
+        train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date = train_valid_test_split(dataset_name, data)
 
-    # define metrics
-    rmse = MeanSquaredError(square_root=True)
-    #mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
-    #mase2 = MASE()
-    smape = mean_absolute_percentage_error
-    mae = MeanAbsoluteError()
-    # keep track of scores, per method and fh
-    scores_expanding = pd.DataFrame()
+        # save prediction in a df. a column per method
+        predictions_valid = pd.DataFrame()
+        predictions_valid['datetime'] = valid['datetime']
+        predictions_valid['true_values'] = valid[target]
 
-    for forecaster in forecasters:
-        print('='*40, forecaster, '='*40)
-        min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
-        pipe = TransformedTargetForecaster(steps=[
-            # ("detrender", Detrender()),
-            # ("deseasonalizer", Differencer(lags=1)),
-            ("minmaxscaler", min_max_scaler),
-            ("forecaster", forecaster),
-        ])
+        # expanding window to fit test data
+        cv = ExpandingWindowSplitter(step_length=1, fh=fh, initial_window=train_without_valid.shape[0])
 
-        df = evaluate_sktime(forecaster=pipe, y=train[target], cv=cv, return_data=True, metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], 
-                             preprocess=preprocess, frequency_yearly_period=frequency_yearly_period)
+        # define metrics
+        rmse = MeanSquaredError(square_root=True)
+        #mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+        #mase2 = MASE()
+        smape = mean_absolute_percentage_error
+        mae = MeanAbsoluteError()
+        # keep track of scores, per method and fh
+        scores_expanding = pd.DataFrame()
 
-        # save predictions in a df
-        forecasts = [i.values[0] for i in df['y_pred'].values]
-        for i in range(fh-1):
-            forecasts = np.insert(forecasts, 0, np.nan)
-        predictions_valid[f'{forecaster}'] = forecasts
+        for forecaster in forecasters:
+            print('='*40, forecaster, '='*40)
+            min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
+            pipe = TransformedTargetForecaster(steps=[
+                # ("detrender", Detrender()),
+                # ("deseasonalizer", Differencer(lags=1)),
+                ("minmaxscaler", min_max_scaler),
+                ("forecaster", forecaster),
+            ])
 
-        total_runtime = np.sum(df['fit_time']) + np.sum(df['pred_time'])
-        scores_expanding = scores_expanding.append({
-            'Method': str(forecaster), 
-            'Forecasting Horizon': fh, 
-            'Preprocess': preprocess,
-            'Runtime': total_runtime, 
-            'MAE': df['MAE'].mean(),
-            'RMSE': df['RMSE'].mean(),
-            'sMAPE': df['sMAPE'].mean(),
-            'MASE': df['MASE'].mean(),
-            'MAE std': df['MAE'].std(),
-            'RMSE std': df['RMSE'].std(),
-            'sMAPE std': df['sMAPE'].std(),
-            'MASE std': df['MASE'].std(),        
+            df = evaluate_sktime(forecaster=pipe, y=train[target], cv=cv, return_data=True, metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], 
+                                 preprocess=preprocess, frequency_yearly_period=frequency_yearly_period)
 
-        }, ignore_index=True)
+            # save predictions in a df
+            forecasts = [i.values[0] for i in df['y_pred'].values]
+            for i in range(fh-1):
+                forecasts = np.insert(forecasts, 0, np.nan)
+            predictions_valid[f'{forecaster}'] = forecasts
 
-    predictions_valid.to_csv(f'../results/predictions/no_preprocess/{dataset_name}/fh.{fh}_{target}.csv', index=False)
-    scores_expanding.to_csv(f'../results/scores/no_preprocess/{dataset_name}/fh.{fh}_{target}.csv', index=False)
-    
-    
-    
-    
+            total_runtime = np.sum(df['fit_time']) + np.sum(df['pred_time'])
+            scores_expanding = scores_expanding.append({
+                'Method': str(forecaster), 
+                'Forecasting Horizon': fh, 
+                'Preprocess': preprocess,
+                'Runtime': total_runtime, 
+                'MAE': df['MAE'].mean(),
+                'RMSE': df['RMSE'].mean(),
+                'sMAPE': df['sMAPE'].mean(),
+                'MASE': df['MASE'].mean(),
+                'MAE std': df['MAE'].std(),
+                'RMSE std': df['RMSE'].std(),
+                'sMAPE std': df['sMAPE'].std(),
+                'MASE std': df['MASE'].std(),        
+
+            }, ignore_index=True)
+
+        predictions_valid.to_csv(f'../results/predictions/{sample}/no_preprocess/{dataset_name}/fh.{fh}_{target}.csv', index=False)
+        scores_expanding.to_csv(f'../results/scores/{sample}/no_preprocess/{dataset_name}/fh.{fh}_{target}.csv', index=False)
+
+elif sample == 'test':
+    for target in data.drop(columns=['datetime']).columns:
+        print('#'*70, target, '#'*70)
+
+        # split data
+        train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date = train_valid_test_split(dataset_name, data)
+
+        # save prediction in a df. a column per method
+        predictions_test = pd.DataFrame()
+        predictions_test['datetime'] = test['datetime']
+        predictions_test['true_values'] = test[target]
+
+        # expanding window to fit test data
+        cv = ExpandingWindowSplitter(step_length=1, fh=fh, initial_window=train.shape[0])
+
+        # define metrics
+        rmse = MeanSquaredError(square_root=True)
+        #mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+        #mase2 = MASE()
+        smape = mean_absolute_percentage_error
+        mae = MeanAbsoluteError()
+        # keep track of scores, per method and fh
+        scores_expanding = pd.DataFrame()
+
+        for forecaster in forecasters:
+            print('='*40, forecaster, '='*40)
+            min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
+            pipe = TransformedTargetForecaster(steps=[
+                # ("detrender", Detrender()),
+                # ("deseasonalizer", Differencer(lags=1)),
+                ("minmaxscaler", min_max_scaler),
+                ("forecaster", forecaster),
+            ])
+
+            df = evaluate_sktime(forecaster=pipe, y=data[target], cv=cv, return_data=True, metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], 
+                                 preprocess=preprocess, frequency_yearly_period=frequency_yearly_period)
+
+            # save predictions in a df
+            forecasts = [i.values[0] for i in df['y_pred'].values]
+            for i in range(fh-1):
+                forecasts = np.insert(forecasts, 0, np.nan)
+            predictions_test[f'{forecaster}'] = forecasts
+
+            total_runtime = np.sum(df['fit_time']) + np.sum(df['pred_time'])
+            scores_expanding = scores_expanding.append({
+                'Method': str(forecaster), 
+                'Forecasting Horizon': fh, 
+                'Preprocess': preprocess,
+                'Runtime': total_runtime, 
+                'MAE': df['MAE'].mean(),
+                'RMSE': df['RMSE'].mean(),
+                'sMAPE': df['sMAPE'].mean(),
+                'MASE': df['MASE'].mean(),
+                'MAE std': df['MAE'].std(),
+                'RMSE std': df['RMSE'].std(),
+                'sMAPE std': df['sMAPE'].std(),
+                'MASE std': df['MASE'].std(),        
+
+            }, ignore_index=True)
+
+        predictions_test.to_csv(f'../results/predictions/{sample}/no_preprocess/{dataset_name}/fh.{fh}_{target}.csv', index=False)
+        scores_expanding.to_csv(f'../results/scores/{sample}/no_preprocess/{dataset_name}/fh.{fh}_{target}.csv', index=False)
+
+
+
+
