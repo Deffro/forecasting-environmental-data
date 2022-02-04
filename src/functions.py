@@ -16,7 +16,6 @@ from sktime.forecasting.model_evaluation._functions import _split
 from sktime.forecasting.base._fh import ForecastingHorizon
 
 from sktime.performance_metrics.forecasting import MeanSquaredError, MeanAbsoluteScaledError, mean_absolute_percentage_error, MeanAbsoluteError
-from epftoolbox.evaluation import MASE
 ### Read Functions ###
 
 def convert_to_datetime_and_set_index(data, dataset_name):
