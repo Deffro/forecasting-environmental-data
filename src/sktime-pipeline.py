@@ -58,7 +58,6 @@ forecasters = [
     ExponentialSmoothing(damped_trend=False, initial_level=None, initial_seasonal=None, initial_trend=None, initialization_method='estimated', seasonal=None, sp=frequency_yearly_period, trend='add', use_boxcox=None),
     AutoETS(n_jobs=-1),
     ThetaForecaster(deseasonalize=True, initial_level=None, sp=frequency_yearly_period),
-    TBATS(box_cox_bounds=(0, 1), context=None, multiprocessing_start_method='spawn', n_jobs=-1, show_warnings=True, sp=frequency_yearly_period, use_arma_errors=True, use_box_cox=None, use_damped_trend=None, use_trend=None),
     DirectTabularRegressionForecaster(estimator=LinearRegression(copy_X=True, fit_intercept=True, n_jobs=-1, normalize=False, positive=False)),
     DirectTabularRegressionForecaster(estimator=Lasso(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=1000, normalize=False, positive=False, precompute=False, random_state=42, selection='cyclic', tol=0.0001, warm_start=False)),
     DirectTabularRegressionForecaster(estimator=Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None, normalize=False, random_state=42, solver='auto', tol=0.001)),
