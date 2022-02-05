@@ -506,18 +506,6 @@ def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, 
         # split data
         y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
         y_train_ = y_train.copy()
-        ### transformations on the train ###
-        if preprocess is True:
-            # moving average
-            moving_average = MovingAverageSubtraction(window=frequency_yearly_period)
-            y_train = moving_average.fit_transform(y_train)
-
-            # differencing
-            differenciator = Differencing(shift=1)
-            y_train = differenciator.fit_transform(y_train)
-
-        ### min max scaling always ###
-        y_train, scaler = apply_min_max_scaling(y_train)
 
         y_train = y_train.dropna()
 
@@ -532,19 +520,6 @@ def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, 
         y_pred_until_last_fh = forecaster.predict(fh=[i+1 for i in range (cv.fh)])
         y_pred = y_pred_until_last_fh[-1:] # the last forecast for the requested fh
         
-        
-        ### inverse transform ###
-        # min max scaling always
-        y_pred = pd.Series(data=[i[0] for i in scaler.inverse_transform(y_pred.values.reshape(-1, 1))], index=y_pred.index)
-        y_pred_until_last_fh = pd.Series(data=[i[0] for i in scaler.inverse_transform(y_pred_until_last_fh.values.reshape(-1, 1))], index=y_pred_until_last_fh.index)
-        
-        if preprocess is True:
-            # difference
-            y_pred_until_last_fh = differenciator.inverse_transform(y_pred_until_last_fh)
-            
-            # moving average
-            y_pred = moving_average.inverse_transform(y_pred_until_last_fh)   
-            y_pred = pd.Series(index=y_test.index, data=y_pred)
         pred_time = time.perf_counter() - start_pred
 
         ### score ###
