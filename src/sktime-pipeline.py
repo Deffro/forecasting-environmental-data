@@ -76,7 +76,7 @@ args = parser.parse_args()
 dataset_name = args.dataset_name
 sample = args.sample
 fh = int(args.fh)
-
+fh=[i+1 for i in range (fh)]
 
 # Read Data
 #dataset_name = 'Solcast'

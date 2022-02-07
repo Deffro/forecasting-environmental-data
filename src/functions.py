@@ -502,7 +502,7 @@ def evaluate_sktime(forecaster, y, fh, initial_window, metrics=None, frequency_y
     results = pd.DataFrame()
 
     ### Expanding Window ###
-    for i in range(len(y)-initial_window):
+    for i in tqdm(range(len(y)-initial_window)):
         y_train = y[:initial_window + i]
         y_train_ = y_train.copy()
         
