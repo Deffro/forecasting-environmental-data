@@ -11,9 +11,9 @@ from statsmodels.tsa.stattools import adfuller
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sklearn.preprocessing import MinMaxScaler
 
-from sktime.utils.validation.forecasting import check_fh
-from sktime.forecasting.model_evaluation._functions import _split
-from sktime.forecasting.base._fh import ForecastingHorizon
+# from sktime.utils.validation.forecasting import check_fh
+# from sktime.forecasting.model_evaluation._functions import _split
+# from sktime.forecasting.base._fh import ForecastingHorizon
 
 from sktime.performance_metrics.forecasting import MeanSquaredError, MeanAbsoluteScaledError, mean_absolute_percentage_error, MeanAbsoluteError
 ### Read Functions ###
@@ -490,53 +490,69 @@ def train_valid_test_split(dataset_name, data):
     
     return train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date
 
-def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, preprocess=False, frequency_yearly_period=None):
+def evaluate_sktime(forecaster, y, fh, initial_window, metrics=None, frequency_yearly_period=12):
     
     ### Check metric names ### 
     accepted_metrics = ['MAE', 'RMSE', 'MASE', 'sMAPE']
     for m in metrics:
         if m not in accepted_metrics:
             raise ValueError(f'dataset_name accepted values are {accepted_metrics}')
-    
+            
     ### Initialize dataframe ###
     results = pd.DataFrame()
-    
-    ### Run temporal cross-validation ###
-    for train, test in tqdm(cv.split(y)):
-        # split data
-        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
+
+    ### Expanding Window ###
+    for i in range(len(y)-initial_window):
+        y_train = y[:initial_window + i]
         y_train_ = y_train.copy()
-
-        y_train = y_train.dropna()
-
+        
+        # fh still fits in the data. test will be equal to fh
+        if initial_window + i + max(fh) < len(y):
+            y_test = y[initial_window + i:initial_window + i + max(fh)]
+        # fh will overflow the data. test will be at the maximum of data
+        else:
+            y_test = y[initial_window + i:]
+        
         ### fit ###
         start_fit = time.perf_counter()
-        forecaster.fit(y_train, fh=cv.fh)
+        forecaster.fit(y_train, fh=fh)
         fit_time = time.perf_counter() - start_fit
-    
-        ### predict ###
-        start_pred = time.perf_counter()
-        # forecast for each step until the last fh. we need these values to scale back from differencing and moving average
-        y_pred_until_last_fh = forecaster.predict(fh=[i+1 for i in range (cv.fh)])
-        y_pred = y_pred_until_last_fh[-1:] # the last forecast for the requested fh
         
+        ### predict ###
+        start_pred = time.perf_counter()    
+        y_pred_until_last_fh = forecaster.predict(fh=fh)
         pred_time = time.perf_counter() - start_pred
+        y_pred_until_last_fh = y_pred_until_last_fh.loc[y_pred_until_last_fh.index.isin(y_test.index)]
 
         ### score ###
         scores = {}
-        for metric_name in metrics:
-            if metric_name == 'MAE':
-                mae = MeanAbsoluteError()
-                scores[metric_name] = mae(y_test, y_pred)            
-            if metric_name == 'RMSE':
-                rmse = MeanSquaredError(square_root=True)
-                scores[metric_name] = rmse(y_test, y_pred)
-            if metric_name == 'sMAPE':
-                scores[metric_name] = mean_absolute_percentage_error(y_test, y_pred, symmetric=True)                
-            if metric_name == 'MASE':
-                mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
-                scores[metric_name] = mase(y_test, y_pred, y_train=y_train_)   
-                
+        for i in fh:
+            for metric_name in metrics:
+                if metric_name == 'MAE':
+                    mae = MeanAbsoluteError()
+                    try:
+                        scores[f'fh={i} {metric_name}'] = mae([y_test[i-1]], [y_pred_until_last_fh[i-1]])                         
+                    # if fh overflows, insert nan
+                    except IndexError:
+                        scores[f'fh={i} {metric_name}'] = np.nan
+                if metric_name == 'RMSE':
+                    rmse = MeanSquaredError(square_root=True)
+                    try:
+                        scores[f'fh={i} {metric_name}'] = rmse([y_test[i-1]], [y_pred_until_last_fh[i-1]])
+                    except IndexError:
+                        scores[f'fh={i} {metric_name}'] = np.nan                        
+                if metric_name == 'sMAPE':
+                    try:
+                        scores[f'fh={i} {metric_name}'] = mean_absolute_percentage_error([y_test[i-1]], [y_pred_until_last_fh[i-1]], symmetric=True)           
+                    except IndexError:
+                        scores[f'fh={i} {metric_name}'] = np.nan                        
+                if metric_name == 'MASE':
+                    mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+                    try:
+                        scores[f'fh={i} {metric_name}'] = mase([y_test[i-1]], [y_pred_until_last_fh[i-1]], y_train=y_train_)        
+                    except IndexError:
+                        scores[f'fh={i} {metric_name}'] = np.nan                        
+
         ### save results ###
         results = results.append(
             {
@@ -544,17 +560,15 @@ def evaluate_sktime(forecaster, cv, y, X=None, metrics=None, return_data=False, 
                 "pred_time": pred_time,
                 "len_train_window": len(y_train),
                 "cutoff": forecaster.cutoff,
-                "y_train": y_train if return_data else np.nan,
-                "y_test": y_test if return_data else np.nan,
-                "y_pred": y_pred if return_data else np.nan,
+                "y_train": y_train_,
+                "y_test": y_test,
+                "y_pred": y_pred_until_last_fh
             },
             ignore_index=True,
         )
         for k, v in scores.items():
-            results.at[results.index.max(), k] = v
+            results.at[results.index.max(), k] = v    
 
-    ### post-processing of results ###
-    if not return_data:
-        results = results.drop(columns=["y_train", "y_test", "y_pred"])
-    results["len_train_window"] = results["len_train_window"].astype(int)
+    results["len_train_window"] = results["len_train_window"].astype(int)  
+    
     return results
