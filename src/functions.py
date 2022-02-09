@@ -11,10 +11,6 @@ from statsmodels.tsa.stattools import adfuller
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sklearn.preprocessing import MinMaxScaler
 
-# from sktime.utils.validation.forecasting import check_fh
-# from sktime.forecasting.model_evaluation._functions import _split
-# from sktime.forecasting.base._fh import ForecastingHorizon
-
 from sktime.performance_metrics.forecasting import MeanSquaredError, MeanAbsoluteScaledError, mean_absolute_percentage_error, MeanAbsoluteError
 ### Read Functions ###
 
