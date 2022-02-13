@@ -179,170 +179,180 @@ data.index = pd.PeriodIndex(data.index, freq=freq_sktime)
 if sample == 'valid':
 
     for target in data.drop(columns=['datetime']).columns:
-        print('#'*70, target, '#'*70)
+    
+        # check if file already exists
+        target_ = target.replace('/', '_')
+        if os.path.isfile(f'../results/predictions/valid/no_preprocess/{dataset_name}/{target_}.csv') is False:
+    
+            print('#'*70, target, '#'*70)
 
-        # split data
-        train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date = train_valid_test_split(dataset_name, data)
-        initial_window = train_without_valid.shape[0]
+            # split data
+            train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date = train_valid_test_split(dataset_name, data)
+            initial_window = train_without_valid.shape[0]
 
-        # save prediction in a df. a column per method
-        predictions_valid = pd.DataFrame()
-        predictions_valid['datetime'] = valid['datetime']
-        predictions_valid['true_values'] = valid[target]
+            # save prediction in a df. a column per method
+            predictions_valid = pd.DataFrame()
+            predictions_valid['datetime'] = valid['datetime']
+            predictions_valid['true_values'] = valid[target]
 
-        # define metrics
-        rmse = MeanSquaredError(square_root=True)
-        mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
-        smape = mean_absolute_percentage_error
-        mae = MeanAbsoluteError()
-        # keep track of scores, per method and fh
-        scores_expanding = pd.DataFrame()
+            # define metrics
+            rmse = MeanSquaredError(square_root=True)
+            mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+            smape = mean_absolute_percentage_error
+            mae = MeanAbsoluteError()
+            # keep track of scores, per method and fh
+            scores_expanding = pd.DataFrame()
 
-        for forecaster in forecasters:
+            for forecaster in forecasters:
 
-            print('='*40, forecaster, '='*40)
-            min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
-            pipe = TransformedTargetForecaster(steps=[
-                # ("detrender", Detrender()),
-                # ("deseasonalizer", Differencer(lags=1)),
-                ("minmaxscaler", min_max_scaler),
-                ("forecaster", forecaster),
-            ])
+                print('='*40, forecaster, '='*40)
+                min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
+                pipe = TransformedTargetForecaster(steps=[
+                    # ("detrender", Detrender()),
+                    # ("deseasonalizer", Differencer(lags=1)),
+                    ("minmaxscaler", min_max_scaler),
+                    ("forecaster", forecaster),
+                ])
 
-            df = evaluate_sktime(pipe, train[target], fh=fh, initial_window=initial_window, 
-                                 metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], frequency_yearly_period=frequency_yearly_period)
+                df = evaluate_sktime(pipe, train[target], fh=fh, initial_window=initial_window, 
+                                     metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], frequency_yearly_period=frequency_yearly_period)
 
-            # save predictions in a df
-            for ii in fh:
-                forecasts = []
-                for v in df['y_pred'].values:
-                    try:
-                        forecasts.append(v.values[ii-1])
-                    except IndexError:
-                        pass
-                if ii < np.max(fh):
-                    for i in range(len(predictions_valid)-len(forecasts)-ii+1):
-                        forecasts.append(np.nan)
-                for i in range(ii-1):
-                    forecasts = np.insert(forecasts, 0, np.nan)
-                predictions_valid[f'fh={ii} {forecaster}'] = forecasts
+                # save predictions in a df
+                for ii in fh:
+                    forecasts = []
+                    for v in df['y_pred'].values:
+                        try:
+                            forecasts.append(v.values[ii-1])
+                        except IndexError:
+                            pass
+                    if ii < np.max(fh):
+                        for i in range(len(predictions_valid)-len(forecasts)-ii+1):
+                            forecasts.append(np.nan)
+                    for i in range(ii-1):
+                        forecasts = np.insert(forecasts, 0, np.nan)
+                    predictions_valid[f'fh={ii} {forecaster}'] = forecasts
 
-            total_runtime = np.sum(df['fit_time']) + np.sum(df['pred_time'])
+                total_runtime = np.sum(df['fit_time']) + np.sum(df['pred_time'])
 
-            # evaluate forecasting horizons on the same number of samples
-            p = predictions_valid.dropna()
+                # evaluate forecasting horizons on the same number of samples
+                p = predictions_valid.dropna()
 
-            scores_expanding = scores_expanding.append({
-                'Method': str(forecaster), 
-                'Forecasting Horizon': fh, 
-                'Preprocess': preprocess,
-                'Runtime': total_runtime,      
+                scores_expanding = scores_expanding.append({
+                    'Method': str(forecaster), 
+                    'Forecasting Horizon': fh, 
+                    'Preprocess': preprocess,
+                    'Runtime': total_runtime,      
 
-            }, ignore_index=True)
+                }, ignore_index=True)
 
-            for i in fh:
-                maes, rmses, smapes, mases = [], [], [], []
-                for ii, (j, row) in enumerate(p.iterrows()):
-                    maes.append(mae([row['true_values']], [row[f'fh={i} {forecaster}']]))
-                    rmses.append(rmse([row['true_values']], [row[f'fh={i} {forecaster}']]))
-                    smapes.append(smape([row['true_values']], [row[f'fh={i} {forecaster}']]))
-                    mases.append(mase([row['true_values']], [row[f'fh={i} {forecaster}']], y_train=df.iloc[max(fh)-1+ii]['y_train']))
+                for i in fh:
+                    maes, rmses, smapes, mases = [], [], [], []
+                    for ii, (j, row) in enumerate(p.iterrows()):
+                        maes.append(mae([row['true_values']], [row[f'fh={i} {forecaster}']]))
+                        rmses.append(rmse([row['true_values']], [row[f'fh={i} {forecaster}']]))
+                        smapes.append(smape([row['true_values']], [row[f'fh={i} {forecaster}']]))
+                        mases.append(mase([row['true_values']], [row[f'fh={i} {forecaster}']], y_train=df.iloc[max(fh)-1+ii]['y_train']))
 
 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} MAE'] = np.mean(maes)   
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} RMSE'] = np.mean(rmses) 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE'] = np.mean(smapes) 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE'] = np.mean(mases) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} MAE'] = np.mean(maes)   
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} RMSE'] = np.mean(rmses) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE'] = np.mean(smapes) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE'] = np.mean(mases) 
 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} MAE std'] = np.std(maes)   
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} RMSE std'] = np.std(rmses) 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE std'] = np.std(smapes) 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE std'] = np.std(mases) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} MAE std'] = np.std(maes)   
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} RMSE std'] = np.std(rmses) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE std'] = np.std(smapes) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE std'] = np.std(mases) 
 
-        predictions_valid.to_csv(f'../results/predictions/valid/no_preprocess/{dataset_name}/{target}.csv', index=False)
-        scores_expanding.to_csv(f'../results/scores/valid/no_preprocess/{dataset_name}/{target}.csv', index=False)
+            predictions_valid.to_csv(f'../results/predictions/valid/no_preprocess/{dataset_name}/{target_}.csv', index=False)
+            scores_expanding.to_csv(f'../results/scores/valid/no_preprocess/{dataset_name}/{target_}.csv', index=False)
 
 elif sample == 'test':
     for target in data.drop(columns=['datetime']).columns:
-        print('#'*70, target, '#'*70)
+    
+        # check if file already exists
+        target_ = target.replace('/', '_')
+        if os.path.isfile(f'../results/predictions/test/no_preprocess/{dataset_name}/{target_}.csv') is False:    
+    
+            print('#'*70, target, '#'*70)
 
-        # split data
-        train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date = train_valid_test_split(dataset_name, data)
-        initial_window = train.shape[0]
+            # split data
+            train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date = train_valid_test_split(dataset_name, data)
+            initial_window = train.shape[0]
 
-        # save prediction in a df. a column per method
-        predictions_test = pd.DataFrame()
-        predictions_test['datetime'] = test['datetime']
-        predictions_test['true_values'] = test[target]
+            # save prediction in a df. a column per method
+            predictions_test = pd.DataFrame()
+            predictions_test['datetime'] = test['datetime']
+            predictions_test['true_values'] = test[target]
 
-        # define metrics
-        rmse = MeanSquaredError(square_root=True)
-        mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
-        smape = mean_absolute_percentage_error
-        mae = MeanAbsoluteError()
-        # keep track of scores, per method and fh
-        scores_expanding = pd.DataFrame()
+            # define metrics
+            rmse = MeanSquaredError(square_root=True)
+            mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+            smape = mean_absolute_percentage_error
+            mae = MeanAbsoluteError()
+            # keep track of scores, per method and fh
+            scores_expanding = pd.DataFrame()
 
-        for forecaster in forecasters:
+            for forecaster in forecasters:
 
-            print('='*40, forecaster, '='*40)
-            min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
-            pipe = TransformedTargetForecaster(steps=[
-                # ("detrender", Detrender()),
-                # ("deseasonalizer", Differencer(lags=1)),
-                ("minmaxscaler", min_max_scaler),
-                ("forecaster", forecaster),
-            ])
+                print('='*40, forecaster, '='*40)
+                min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
+                pipe = TransformedTargetForecaster(steps=[
+                    # ("detrender", Detrender()),
+                    # ("deseasonalizer", Differencer(lags=1)),
+                    ("minmaxscaler", min_max_scaler),
+                    ("forecaster", forecaster),
+                ])
 
-            df = evaluate_sktime(pipe, data[target], fh=fh, initial_window=initial_window, 
-                                 metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], frequency_yearly_period=frequency_yearly_period)
+                df = evaluate_sktime(pipe, data[target], fh=fh, initial_window=initial_window, 
+                                     metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], frequency_yearly_period=frequency_yearly_period)
 
-            # save predictions in a df
-            for ii in fh:
-                forecasts = []
-                for v in df['y_pred'].values:
-                    try:
-                        forecasts.append(v.values[ii-1])
-                    except IndexError:
-                        pass
-                if ii < np.max(fh):
-                    for i in range(len(predictions_test)-len(forecasts)-ii+1):
-                        forecasts.append(np.nan)
-                for i in range(ii-1):
-                    forecasts = np.insert(forecasts, 0, np.nan)
-                predictions_test[f'fh={ii} {forecaster}'] = forecasts
+                # save predictions in a df
+                for ii in fh:
+                    forecasts = []
+                    for v in df['y_pred'].values:
+                        try:
+                            forecasts.append(v.values[ii-1])
+                        except IndexError:
+                            pass
+                    if ii < np.max(fh):
+                        for i in range(len(predictions_test)-len(forecasts)-ii+1):
+                            forecasts.append(np.nan)
+                    for i in range(ii-1):
+                        forecasts = np.insert(forecasts, 0, np.nan)
+                    predictions_test[f'fh={ii} {forecaster}'] = forecasts
 
-            total_runtime = np.sum(df['fit_time']) + np.sum(df['pred_time'])
+                total_runtime = np.sum(df['fit_time']) + np.sum(df['pred_time'])
 
-            # evaluate forecasting horizons on the same number of samples
-            p = predictions_test.dropna()
+                # evaluate forecasting horizons on the same number of samples
+                p = predictions_test.dropna()
 
-            scores_expanding = scores_expanding.append({
-                'Method': str(forecaster), 
-                'Forecasting Horizon': fh, 
-                'Preprocess': preprocess,
-                'Runtime': total_runtime,      
+                scores_expanding = scores_expanding.append({
+                    'Method': str(forecaster), 
+                    'Forecasting Horizon': fh, 
+                    'Preprocess': preprocess,
+                    'Runtime': total_runtime,      
 
-            }, ignore_index=True)
+                }, ignore_index=True)
 
-            for i in fh:
-                maes, rmses, smapes, mases = [], [], [], []
-                for ii, (j, row) in enumerate(p.iterrows()):
-                    maes.append(mae([row['true_values']], [row[f'fh={i} {forecaster}']]))
-                    rmses.append(rmse([row['true_values']], [row[f'fh={i} {forecaster}']]))
-                    smapes.append(smape([row['true_values']], [row[f'fh={i} {forecaster}']]))
-                    mases.append(mase([row['true_values']], [row[f'fh={i} {forecaster}']], y_train=df.iloc[max(fh)-1+ii]['y_train']))
+                for i in fh:
+                    maes, rmses, smapes, mases = [], [], [], []
+                    for ii, (j, row) in enumerate(p.iterrows()):
+                        maes.append(mae([row['true_values']], [row[f'fh={i} {forecaster}']]))
+                        rmses.append(rmse([row['true_values']], [row[f'fh={i} {forecaster}']]))
+                        smapes.append(smape([row['true_values']], [row[f'fh={i} {forecaster}']]))
+                        mases.append(mase([row['true_values']], [row[f'fh={i} {forecaster}']], y_train=df.iloc[max(fh)-1+ii]['y_train']))
 
 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} MAE'] = np.mean(maes)   
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} RMSE'] = np.mean(rmses) 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE'] = np.mean(smapes) 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE'] = np.mean(mases) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} MAE'] = np.mean(maes)   
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} RMSE'] = np.mean(rmses) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE'] = np.mean(smapes) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE'] = np.mean(mases) 
 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} MAE std'] = np.std(maes)   
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} RMSE std'] = np.std(rmses) 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE std'] = np.std(smapes) 
-                scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE std'] = np.std(mases) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} MAE std'] = np.std(maes)   
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} RMSE std'] = np.std(rmses) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE std'] = np.std(smapes) 
+                    scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE std'] = np.std(mases) 
 
-        predictions_test.to_csv(f'../results/predictions/test/no_preprocess/{dataset_name}/{target}.csv', index=False)
-        scores_expanding.to_csv(f'../results/scores/test/no_preprocess/{dataset_name}/{target}.csv', index=False)
+            predictions_test.to_csv(f'../results/predictions/test/no_preprocess/{dataset_name}/{target_}.csv', index=False)
+            scores_expanding.to_csv(f'../results/scores/test/no_preprocess/{dataset_name}/{target_}.csv', index=False)
