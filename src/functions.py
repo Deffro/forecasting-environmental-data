@@ -21,11 +21,13 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data = data.set_index('datetime').asfreq('1H')
         data = data.resample('1D').mean()
         data = data.loc[data.index < '2022-01-01']
+        data = data.loc[data.index >= '2012-01-01']
     elif dataset_name == 'ERA5':
         data['date'] = data['date'].apply(lambda x: x.split('-')[0]+x.split('-')[1]+'19'+x.split('-')[2])
         data['datetime']= pd.to_datetime(data['date'], format='%d%m%Y')
         data = data.set_index('datetime').asfreq('1D')
-        data = data.resample('1MS').mean()
+        data = data.loc[data.index > '1970-01']
+        # data = data.resample('1MS').mean()
     elif dataset_name == 'ORAS5':
         data['datetime']= pd.to_datetime(data['date'], format='%Y%m')
         data = data.set_index('datetime').asfreq('1MS')    
@@ -34,17 +36,19 @@ def convert_to_datetime_and_set_index(data, dataset_name):
         data = data.set_index('datetime').asfreq('1H')
         # handle missing values before resampling
         data = handle_missing_values(data, dataset_name)
-        data = data.resample('1D').mean()
+        data = data.loc[data.index > '2020-09']
+        # data = data.resample('1D').mean()
     elif dataset_name == 'Jena':
         data['datetime'] = pd.to_datetime(data['Date Time'])
         data = data.set_index('datetime')
         data = data.resample('1H').mean()
         # handle missing values before resampling
         data = handle_missing_values(data, dataset_name)
-        data = data.resample('1D').mean()
-        data = data.reset_index()
-        data = data.set_index('datetime').asfreq('1D')
+        # data = data.resample('1D').mean()
+        # data = data.reset_index()
+        # data = data.set_index('datetime').asfreq('1D')
         data = data.loc[data.index < '2017-01-01']
+        data = data.loc[data.index > '2016-09']
     elif dataset_name == 'NOAA':
         data['datetime'] = pd.to_datetime(data['Date'], format='%Y%m%d')
         data = data.set_index('datetime').asfreq('1D')
@@ -432,29 +436,29 @@ def train_valid_test_split(dataset_name, data):
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]
     elif dataset_name == 'ERA5':
-        train_test_split_date = '1977-01-01'
-        train_valid_split_date = '1975-01-01'
+        train_test_split_date = '1978-01-01'
+        train_valid_split_date = '1977-01-01'
         train = data.loc[data.index < train_test_split_date]
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]
     elif dataset_name == 'Solcast':
-        train_test_split_date = '2020-01-01'
-        train_valid_split_date = '2018-01-01'
+        train_test_split_date = '2021-01-01'
+        train_valid_split_date = '2020-01-01'
         train = data.loc[data.index < train_test_split_date]
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]
     elif dataset_name == 'AQPiraeus':
-        train_test_split_date = '2020-08-01'
-        train_valid_split_date = '2020-03-01'
+        train_test_split_date = '2020-12-20'
+        train_valid_split_date = '2020-12-08'
         train = data.loc[data.index < train_test_split_date]
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
         test = data.loc[data.index >= train_test_split_date]
     elif dataset_name == 'Jena':   
-        train_test_split_date = '2016-01-01'
-        train_valid_split_date = '2015-01-01'
+        train_test_split_date = '2016-12-20'
+        train_valid_split_date = '2016-12-08'
         train = data.loc[data.index < train_test_split_date]
         valid = train.loc[train.index >= train_valid_split_date]
         train_without_valid = data.loc[data.index < train_valid_split_date]
