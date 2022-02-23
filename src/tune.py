@@ -290,10 +290,10 @@ for target in data.drop(columns=['datetime']):
         ])
 
         if tune_only_window_length == 'True':
-            param_grid = {"forecaster__window_length": [i*frequency_yearly_period for i in range(1,10)]}
+            param_grid = {"forecaster__window_length": [int((i/2)*frequency_yearly_period) for i in range(2,9)]}
         else:
             param_grid = value['params']
-            param_grid['forecaster__window_length'] = [i*frequency_yearly_period for i in range(1,5)]
+            param_grid['forecaster__window_length'] = [int((i/2)*frequency_yearly_period) for i in range(2,9)]
 
         gscv = ForecastingGridSearchCV(
             forecaster = pipe, 
