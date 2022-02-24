@@ -80,7 +80,7 @@ fh=[i+1 for i in range (fh)]
 
 # Read Data
 #dataset_name = 'Solcast'
-data, frequency_yearly_period, freq_sktime = read_file(dataset_name, data_path='../data/')
+data, seasonal_period, freq_sktime = read_file(dataset_name, data_path='../data/')
 preprocess = False
 
 # for multi step consider DirectTabularRegressionForecaster, RecursiveTabularRegressionForecaster, DirRecTabularRegressionForecaster
@@ -91,9 +91,9 @@ forecasters = [
     AutoARIMA(n_jobs=-1),
     ExponentialSmoothing(damped_trend=False, initial_level=None, initial_seasonal=None, 
                          initial_trend=None, initialization_method='estimated', seasonal=None, 
-                         sp=frequency_yearly_period, trend='add', use_boxcox=None),
+                         sp=seasonal_period, trend='add', use_boxcox=None),
     AutoETS(n_jobs=-1),
-    ThetaForecaster(deseasonalize=True, initial_level=None, sp=frequency_yearly_period),
+    ThetaForecaster(deseasonalize=True, initial_level=None, sp=seasonal_period),
     DirectTabularRegressionForecaster(estimator=LinearRegression(copy_X=True, fit_intercept=True, 
                                                                  n_jobs=-1, normalize=False, positive=False)),
     DirectTabularRegressionForecaster(estimator=Lasso(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=1000, 
@@ -197,7 +197,7 @@ if sample == 'valid':
 
             # define metrics
             rmse = MeanSquaredError(square_root=True)
-            mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+            mase = MeanAbsoluteScaledError(sp=seasonal_period)
             smape = mean_absolute_percentage_error
             mae = MeanAbsoluteError()
             # keep track of scores, per method and fh
@@ -215,7 +215,7 @@ if sample == 'valid':
                 ])
 
                 df = evaluate_sktime(pipe, train[target], fh=fh, initial_window=initial_window, 
-                                     metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], frequency_yearly_period=frequency_yearly_period)
+                                     metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], seasonal_period=seasonal_period)
 
                 # save predictions in a df
                 for ii in fh:
@@ -287,7 +287,7 @@ elif sample == 'test':
 
             # define metrics
             rmse = MeanSquaredError(square_root=True)
-            mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+            mase = MeanAbsoluteScaledError(sp=seasonal_period)
             smape = mean_absolute_percentage_error
             mae = MeanAbsoluteError()
             # keep track of scores, per method and fh
@@ -305,7 +305,7 @@ elif sample == 'test':
                 ])
 
                 df = evaluate_sktime(pipe, data[target], fh=fh, initial_window=initial_window, 
-                                     metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], frequency_yearly_period=frequency_yearly_period)
+                                     metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], seasonal_period=seasonal_period)
 
                 # save predictions in a df
                 for ii in fh:
