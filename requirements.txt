@@ -1,0 +1,10 @@
+pip install sktime==0.10.1
+pip install jupyterlab==3.2.9
+pip install nodejs==0.1.1
+pip install pymannkendall==1.4.2
+pip install statsforecast==0.3.0
+pip install lightgbm==3.3.2
+pip install matplotlib==3.5.1
+pip install tqdm==4.62.3
+pip install Cython==0.29.28
+pip install pmdarima==1.8.5
