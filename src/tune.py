@@ -286,8 +286,8 @@ for target in data.drop(columns=['datetime']):
             ("forecaster", estimator),
         ])
 
-        if seasonal_period == 7:
-            window_size = 1
+        if seasonal_period == 1:
+            window_size = 7
         elif seasonal_period == 12 or seasonal_period == 24:
             window_size = seasonal_period
 
