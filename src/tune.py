@@ -4,9 +4,6 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.arima import AutoARIMA, ARIMA
 from sktime.forecasting.compose import MultiplexForecaster, AutoEnsembleForecaster, ColumnEnsembleForecaster, DirRecTabularRegressionForecaster, RecursiveTabularRegressionForecaster, DirRecTimeSeriesRegressionForecaster, DirectTabularRegressionForecaster, DirectTimeSeriesRegressionForecaster, EnsembleForecaster, StackingForecaster
 from sktime.forecasting.ets import AutoETS
-from sktime.forecasting.bats import BATS
-from sktime.forecasting.croston import Croston
-from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.compose import ColumnwiseTransformer
