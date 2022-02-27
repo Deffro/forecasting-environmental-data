@@ -36,7 +36,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Tuning for ML algorithms. Tune window_length and algorithm parameters.')
 parser.add_argument('dataset_name', help='Dataset Name')
 parser.add_argument('tune_only_window_length', help='If True, Just find the optimal window_length and not the algorithm parameters. Else tune both.')
-parser.add_argument('fast', help='If True, use only one frequency_yearly_period to tune for the expanding window')
+parser.add_argument('fast', help='If True, use only one seasonal_period to tune for the expanding window')
 
 args = parser.parse_args()
 dataset_name = args.dataset_name
@@ -248,11 +248,11 @@ algorithms = {
 fh = 1
 
 # Read Data
-data, frequency_yearly_period, freq_sktime = read_file(dataset_name, data_path='../data/')
+data, seasonal_period, freq_sktime = read_file(dataset_name, data_path='../data/')
 preprocess = False
 
 # metric
-mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+mase = MeanAbsoluteScaledError(sp=seasonal_period)
 
 # ONLY FOR SKTIME
 # keep datetime as a column for plots
@@ -266,7 +266,7 @@ for target in data.drop(columns=['datetime']):
     train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date = train_valid_test_split(dataset_name, data)
 
     if fast == 'True':
-        initial_window = train[:train.shape[0]-frequency_yearly_period].shape[0]
+        initial_window = train[:train.shape[0]-seasonal_period].shape[0]
     else:
         initial_window = train_without_valid.shape[0]
 
@@ -286,11 +286,16 @@ for target in data.drop(columns=['datetime']):
             ("forecaster", estimator),
         ])
 
+        if seasonal_period == 1:
+            window_size = 7
+        elif seasonal_period == 12 or seasonal_period == 24:
+            window_size = seasonal_period
+
         if tune_only_window_length == 'True':
-            param_grid = {"forecaster__window_length": [int((i/2)*frequency_yearly_period) for i in range(2,9)]}
+            param_grid = {"forecaster__window_length": [int((i/2)*window_size) for i in range(2,9)]}
         else:
             param_grid = value['params']
-            param_grid['forecaster__window_length'] = [int((i/2)*frequency_yearly_period) for i in range(2,9)]
+            param_grid['forecaster__window_length'] = [int((i/2)*window_size) for i in range(2,9)]
 
         gscv = ForecastingGridSearchCV(
             forecaster = pipe, 

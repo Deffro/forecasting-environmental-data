@@ -214,18 +214,18 @@ def read_file(dataset_name, data_path='../../data/'):
     
     
     if str(data.index.freq) == '<Day>':
-        frequency_yearly_period = 365
+        seasonal_period = 1
         freq_sktime = 'D'
     elif str(data.index.freq) == '<MonthBegin>' or str(data.index.freq) == '<MonthEnd>':
-        frequency_yearly_period = 12
+        seasonal_period = 12
         freq_sktime = 'M'
     elif str(data.index.freq) == '<Hour>':
-        frequency_yearly_period = 24*365
+        seasonal_period = 24
         freq_sktime = 'H'
     elif str(data.index.freq) == '<YearBegin: month=1>':
-        frequency_yearly_period = 1
+        seasonal_period = 1
         freq_sktime = 'Y'
-    return data, frequency_yearly_period, freq_sktime 
+    return data, seasonal_period, freq_sktime 
 
 
 ### Pre-processing Tests Functions ###
@@ -490,7 +490,7 @@ def train_valid_test_split(dataset_name, data):
     
     return train, test, valid, train_without_valid, train_test_split_date, train_valid_split_date
 
-def evaluate_sktime(forecaster, y, fh, initial_window, metrics=None, frequency_yearly_period=12):
+def evaluate_sktime(forecaster, y, fh, initial_window, metrics=None, seasonal_period=12):
     
     ### Check metric names ### 
     accepted_metrics = ['MAE', 'RMSE', 'MASE', 'sMAPE']
@@ -547,7 +547,7 @@ def evaluate_sktime(forecaster, y, fh, initial_window, metrics=None, frequency_y
                     except IndexError:
                         scores[f'fh={i} {metric_name}'] = np.nan                        
                 if metric_name == 'MASE':
-                    mase = MeanAbsoluteScaledError(sp=frequency_yearly_period)
+                    mase = MeanAbsoluteScaledError(sp=seasonal_period)
                     try:
                         scores[f'fh={i} {metric_name}'] = mase([y_test[i-1]], [y_pred_until_last_fh[i-1]], y_train=y_train_)        
                     except IndexError:
