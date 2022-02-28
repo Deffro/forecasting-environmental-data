@@ -72,7 +72,7 @@ algorithms = {
             'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
             'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
-            'forecaster__estimator__min_samples_split': [1, 2, 3],
+            'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],        
         }     
     },    
@@ -89,7 +89,7 @@ algorithms = {
             'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, -1],
             'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
-            'forecaster__estimator__min_samples_split': [1, 2, 3],
+            'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 50, 100],
             'forecaster__estimator__warm_start': [True, False],     
         }     
