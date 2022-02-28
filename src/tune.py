@@ -276,8 +276,14 @@ for target in data.drop(columns=['datetime']):
 
     for algorithm_name, value in algorithms.items():
         print(algorithm_name)
+        forecaster = value['estimator']
 
-        estimator = DirectTabularRegressionForecaster(estimator=value['estimator'])
+        estimator = DirectTabularRegressionForecaster(estimator=forecaster)
+        
+        if tune_only_window_length == 'True':
+            window_tuned_model = pd.read_pickle(f'../results/tuned_models/just_window/{dataset_name}/{target}.{algorithm_name}.pkl')
+            window_length = window_tuned_model.get_params()['forecaster'].get_params()['window_length']
+            estimator = estimator.set_params(window_length=window_length)
 
         pipe = TransformedTargetForecaster(steps=[
             # ("detrender", Detrender()),
@@ -295,7 +301,6 @@ for target in data.drop(columns=['datetime']):
             param_grid = {"forecaster__window_length": [int((i/2)*window_size) for i in range(2,9)]}
         else:
             param_grid = value['params']
-            param_grid['forecaster__window_length'] = [int((i/2)*window_size) for i in range(2,9)]
 
         gscv = ForecastingGridSearchCV(
             forecaster = pipe, 
