@@ -346,7 +346,13 @@ elif sample == 'test':
             # keep track of scores, per method and fh
             scores_expanding = pd.DataFrame()
 
-            for forecaster in forecasters:
+            for forecaster_name, value in forecasters.items():
+                forecaster = value['estimator']
+                # if ML forecaster
+                if forecaster_name in ML_forecasters:
+                    window_tuned_model = pd.read_pickle(f'../results/tuned_models/just_window/{dataset_name}/{target}.{forecaster_name}.pkl')
+                    window_length = window_tuned_model.get_params()['forecaster'].get_params()['window_length']
+                    forecaster = forecaster.set_params(window_length=window_length)
 
                 print('='*40, forecaster, '='*40)
                 min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
@@ -381,7 +387,7 @@ elif sample == 'test':
                 p = predictions_test.dropna()
 
                 scores_expanding = scores_expanding.append({
-                    'Method': str(forecaster), 
+                    'Method': str(forecaster).replace('\n', '').replace(' ', ''),  
                     'Forecasting Horizon': fh, 
                     'Preprocess': preprocess,
                     'Runtime': total_runtime,      
