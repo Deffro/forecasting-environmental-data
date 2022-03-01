@@ -85,8 +85,8 @@ algorithms = {
         ,
         'params': {
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
-            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, -1],
-            'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, -1],
+            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, None],
+            'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
             'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
             'forecaster__estimator__min_samples_split': [2, 3],
@@ -104,7 +104,7 @@ algorithms = {
         'params': {
             'forecaster__estimator__alpha': [0.5, 0.9],
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
-            'forecaster__estimator__max_depth': [2, 3, 5, 10, -1],
+            'forecaster__estimator__max_depth': [2, 3, 5, 10, None],
             'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
             'forecaster__estimator__min_samples_leaf': [1, 2],
             'forecaster__estimator__min_samples_split': [2, 3],
