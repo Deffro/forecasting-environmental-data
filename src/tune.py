@@ -166,7 +166,7 @@ algorithms = {
         ,
         'params': {
             'forecaster__estimator__alpha': [0.00005, 0.0001, 0.0005, 0.001],
-            'forecaster__estimator__early_epsilon': [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
+            'forecaster__estimator__epsilon': [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
             'forecaster__estimator__max_iter': [50, 100, 200, 500],
             'forecaster__estimator__tol': [1e-05, 1e-06, 5e-05, 5e-04],
             'forecaster__estimator__warm_start': [True, False],
