@@ -46,9 +46,7 @@ fast = args.fast
 algorithms = {
     'decision_tree': {
         'estimator': 
-            DecisionTreeRegressor(ccp_alpha=0.0,  criterion='mse', max_depth=None, max_features=None, max_leaf_nodes=None, 
-                                  min_impurity_decrease=0.0, min_impurity_split=None, min_samples_leaf=1, min_samples_split=2, 
-                                  min_weight_fraction_leaf=0.0, random_state=42, splitter='best')
+            DecisionTreeRegressor(random_state=42)
         ,
         'params': {
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
@@ -61,10 +59,7 @@ algorithms = {
     },
     'random_forest': {
         'estimator': 
-            RandomForestRegressor(bootstrap=True, ccp_alpha=0.0, criterion='mse', max_depth=None, max_features='auto', 
-                                  max_leaf_nodes=None, max_samples=None, min_impurity_decrease=0.0, min_impurity_split=None, 
-                                  min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=100, 
-                                  n_jobs=-1, oob_score=False, random_state=42, verbose=0, warm_start=False)
+            RandomForestRegressor(n_jobs=-1, random_state=42)
         ,
         'params': {
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
@@ -78,10 +73,7 @@ algorithms = {
     },    
     'extra_trees': {
         'estimator': 
-            ExtraTreesRegressor(bootstrap=False, ccp_alpha=0.0, criterion='mse', max_depth=None, max_features='auto', 
-                                max_leaf_nodes=None, max_samples=None, min_impurity_decrease=0.0, min_impurity_split=None, 
-                                min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=100, 
-                                n_jobs=-1, oob_score=False, random_state=42, verbose=0, warm_start=False)
+            ExtraTreesRegressor(n_jobs=-1, random_state=42)
         ,
         'params': {
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
@@ -96,10 +88,7 @@ algorithms = {
     },     
     'gradient_boosting': {
         'estimator': 
-            GradientBoostingRegressor(alpha=0.9, ccp_alpha=0.0, criterion='friedman_mse', init=None, learning_rate=0.1, loss='ls', 
-                                      max_depth=3, max_features=None, max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None, 
-                                      min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=100, n_iter_no_change=None, 
-                                      random_state=42, subsample=1.0, tol=0.0001, validation_fraction=0.1, verbose=0, warm_start=False)
+            GradientBoostingRegressor(random_state=42)
         ,
         'params': {
             'forecaster__estimator__alpha': [0.5, 0.9],
@@ -114,7 +103,7 @@ algorithms = {
     },       
     'adaboost': {
         'estimator': 
-            AdaBoostRegressor(base_estimator=None, learning_rate=1.0, loss='linear', n_estimators=50, random_state=42)
+            AdaBoostRegressor(random_state=42)
         ,
         'params': {
             'forecaster__estimator__loss': ['linear', 'square', 'exponential'],
@@ -124,9 +113,7 @@ algorithms = {
     },      
     'lgb_regressor': {
         'estimator': 
-            lgbm.sklearn.LGBMRegressor(boosting_type='gbdt', class_weight=None, colsample_bytree=1.0, importance_type='split', learning_rate=0.1, max_depth=-1, 
-                                       min_child_samples=20, min_child_weight=0.001, min_split_gain=0.0, n_estimators=100, n_jobs=-1, num_leaves=31, objective=None, 
-                                       random_state=42, reg_alpha=0.0, reg_lambda=0.0, silent='warn', subsample=1.0, subsample_for_bin=200000, subsample_freq=0)
+            lgbm.sklearn.LGBMRegressor(random_state=42)
         ,
         'params': {
             'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, -1],
@@ -138,7 +125,7 @@ algorithms = {
     },   
     'knn': {
         'estimator': 
-            KNeighborsRegressor(algorithm='auto', leaf_size=30, metric='minkowski', metric_params=None, n_jobs=-1, n_neighbors=5, p=2, weights='uniform')
+            KNeighborsRegressor(n_jobs=-1)
         ,
         'params': {
             'forecaster__estimator__n_neighbors': [3, 5, 7, 9, 11, 13, 15, 17, 19, 21],
@@ -147,8 +134,7 @@ algorithms = {
     },    
     'passive_aggressive': {
         'estimator': 
-            PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False, epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive', max_iter=1000, 
-                                       n_iter_no_change=5, random_state=42, shuffle=True, tol=0.001, validation_fraction=0.1, verbose=0, warm_start=False)
+            PassiveAggressiveRegressor(random_state=42)
         ,
         'params': {
             'forecaster__estimator__C': [0.1, 0.25, 0.5, 0.75, 1],
@@ -162,7 +148,7 @@ algorithms = {
     },       
     'huber': {
         'estimator': 
-            HuberRegressor(alpha=0.0001, epsilon=1.35, fit_intercept=True, max_iter=100, tol=1e-05, warm_start=False)
+            HuberRegressor()
         ,
         'params': {
             'forecaster__estimator__alpha': [0.00005, 0.0001, 0.0005, 0.001],
@@ -174,8 +160,7 @@ algorithms = {
     },     
     'bayesian_ridge': {
         'estimator': 
-            BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, alpha_init=None, compute_score=False, copy_X=True, fit_intercept=True, lambda_1=1e-06, 
-                          lambda_2=1e-06, lambda_init=None, n_iter=300, normalize=False, tol=0.001, verbose=False)
+            BayesianRidge()
         ,
         'params': {
             'forecaster__estimator__alpha_1': [1e-05, 5e-05, 1e-06, 5e-06],
@@ -189,8 +174,7 @@ algorithms = {
     },        
     'lasso_lars': {
         'estimator': 
-            LassoLars(alpha=1.0, copy_X=True, eps=2.220446049250313e-16, fit_intercept=True, fit_path=True, jitter=None, max_iter=500, 
-                      normalize=True, positive=False, precompute='auto', random_state=42, verbose=False)
+            LassoLars(random_state=42)
         ,
         'params': {
             'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
@@ -199,8 +183,7 @@ algorithms = {
     },        
     'lars': {
         'estimator': 
-            Lars(copy_X=True, eps=2.220446049250313e-16, fit_intercept=True, fit_path=True, jitter=None, n_nonzero_coefs=500, 
-                 normalize=True, precompute='auto', random_state=42, verbose=False)
+            Lars(random_state=42)
         ,
         'params': {
             'forecaster__estimator__n_nonzero_coefs': [1, 5, 10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
@@ -208,8 +191,7 @@ algorithms = {
     },       
     'elastic_net': {
         'estimator': 
-            ElasticNet(alpha=1.0, copy_X=True, fit_intercept=True, l1_ratio=0.5, max_iter=1000, normalize=False, positive=False, 
-                       precompute=False, random_state=42, selection='cyclic', tol=0.0001, warm_start=False)
+            ElasticNet(random_state=42)
         ,
         'params': {
             'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
@@ -221,7 +203,7 @@ algorithms = {
     },        
     'ridge': {
         'estimator': 
-            Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None, normalize=False, random_state=42, solver='auto', tol=0.001)
+            Ridge(random_state=42)
         ,
         'params': {
             'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
@@ -231,8 +213,7 @@ algorithms = {
     },     
     'lasso': {
         'estimator': 
-            Lasso(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=1000, normalize=False, positive=False, precompute=False, 
-                  random_state=42, selection='cyclic', tol=0.0001, warm_start=False)
+            Lasso(random_state=42)
         ,
         'params': {
             'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
