@@ -102,7 +102,7 @@ def remove_columns(data, dataset_name):
         # so14chgt had errors in the data
         data = data.drop(columns=['date', 'so14chgt', 'so26chgt', 'so28chgt'])
         print(f"Columns 'date', 'so14chgt', 'so26chgt', 'so28chgt' were removed from {dataset_name}.")  
-    elif dataset_name == 'Satellite':
+    elif dataset_name == 'Satellite' or dataset_name == 'ERA5':
         data = data.drop(columns=['date'])
         print(f"Column 'date' was removed from {dataset_name}.")            
     elif dataset_name == 'NOAA':

@@ -72,7 +72,7 @@ algorithms = {
             'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
             'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
-            'forecaster__estimator__min_samples_split': [1, 2, 3],
+            'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],        
         }     
     },    
@@ -85,11 +85,11 @@ algorithms = {
         ,
         'params': {
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
-            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, -1],
-            'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, -1],
+            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, None],
+            'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
             'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
-            'forecaster__estimator__min_samples_split': [1, 2, 3],
+            'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 50, 100],
             'forecaster__estimator__warm_start': [True, False],     
         }     
@@ -104,7 +104,7 @@ algorithms = {
         'params': {
             'forecaster__estimator__alpha': [0.5, 0.9],
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
-            'forecaster__estimator__max_depth': [2, 3, 5, 10, -1],
+            'forecaster__estimator__max_depth': [2, 3, 5, 10, None],
             'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
             'forecaster__estimator__min_samples_leaf': [1, 2],
             'forecaster__estimator__min_samples_split': [2, 3],
@@ -166,7 +166,7 @@ algorithms = {
         ,
         'params': {
             'forecaster__estimator__alpha': [0.00005, 0.0001, 0.0005, 0.001],
-            'forecaster__estimator__early_epsilon': [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
+            'forecaster__estimator__epsilon': [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
             'forecaster__estimator__max_iter': [50, 100, 200, 500],
             'forecaster__estimator__tol': [1e-05, 1e-06, 5e-05, 5e-04],
             'forecaster__estimator__warm_start': [True, False],
@@ -276,8 +276,14 @@ for target in data.drop(columns=['datetime']):
 
     for algorithm_name, value in algorithms.items():
         print(algorithm_name)
+        forecaster = value['estimator']
 
-        estimator = DirectTabularRegressionForecaster(estimator=value['estimator'])
+        estimator = DirectTabularRegressionForecaster(estimator=forecaster)
+        
+        if tune_only_window_length == 'True':
+            window_tuned_model = pd.read_pickle(f'../results/tuned_models/just_window/{dataset_name}/{target}.{algorithm_name}.pkl')
+            window_length = window_tuned_model.get_params()['forecaster'].get_params()['window_length']
+            estimator = estimator.set_params(window_length=window_length)
 
         pipe = TransformedTargetForecaster(steps=[
             # ("detrender", Detrender()),
@@ -295,7 +301,6 @@ for target in data.drop(columns=['datetime']):
             param_grid = {"forecaster__window_length": [int((i/2)*window_size) for i in range(2,9)]}
         else:
             param_grid = value['params']
-            param_grid['forecaster__window_length'] = [int((i/2)*window_size) for i in range(2,9)]
 
         gscv = ForecastingGridSearchCV(
             forecaster = pipe, 
