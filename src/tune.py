@@ -56,7 +56,7 @@ algorithms = {
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
             'forecaster__estimator__min_samples_split': [2, 3]            
         },
-	'n_jobs': -1     
+	'n_jobs': -3     
     },
     'random_forest': {
         'estimator': 
@@ -103,7 +103,7 @@ algorithms = {
             'forecaster__estimator__n_estimators': [10, 100, 200],
             'forecaster__estimator__learning_rate': [0.1, 0.01], 
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },       
     'adaboost': {
         'estimator': 
@@ -114,7 +114,7 @@ algorithms = {
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],
             'forecaster__estimator__learning_rate': [0.1, 0.05, 0.01],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },      
     'lgb_regressor': {
         'estimator': 
@@ -127,7 +127,7 @@ algorithms = {
             'forecaster__estimator__min_child_weight': [0.001, 0.005],
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },   
     'knn': {
         'estimator': 
@@ -152,7 +152,7 @@ algorithms = {
             'forecaster__estimator__validation_fraction': [0.1, 0.2],
             'forecaster__estimator__tol': [None, 0.001, 0.002],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },       
     'huber': {
         'estimator': 
@@ -165,7 +165,7 @@ algorithms = {
             'forecaster__estimator__tol': [1e-05, 1e-06, 5e-05, 5e-04],
             'forecaster__estimator__warm_start': [True, False],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },     
     'bayesian_ridge': {
         'estimator': 
@@ -180,7 +180,7 @@ algorithms = {
             'forecaster__estimator__n_iter': [100, 200, 300, 400],
             'forecaster__estimator__tol': [0.0005, 0.001, 0.005, 0.01, 0.05],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },        
     'lasso_lars': {
         'estimator': 
@@ -190,7 +190,7 @@ algorithms = {
             'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
             'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },        
     'lars': {
         'estimator': 
@@ -199,7 +199,7 @@ algorithms = {
         'params': {
             'forecaster__estimator__n_nonzero_coefs': [1, 5, 10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },       
     'elastic_net': {
         'estimator': 
@@ -212,7 +212,7 @@ algorithms = {
             'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
             'forecaster__estimator__warm_start': [True, False],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },        
     'ridge': {
         'estimator': 
@@ -223,7 +223,7 @@ algorithms = {
             'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
             'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },     
     'lasso': {
         'estimator': 
@@ -235,7 +235,7 @@ algorithms = {
             'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
             'forecaster__estimator__warm_start': [True, False],
         },
-	'n_jobs': -1        
+	'n_jobs': -3        
     },        
 }
 
