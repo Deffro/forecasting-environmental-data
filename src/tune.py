@@ -55,11 +55,12 @@ algorithms = {
             'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
             'forecaster__estimator__min_samples_split': [2, 3]            
-        }     
+        },
+	'n_jobs': -1     
     },
     'random_forest': {
         'estimator': 
-            RandomForestRegressor(n_jobs=-1, random_state=42)
+            RandomForestRegressor(n_jobs=-10, random_state=42)
         ,
         'params': {
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
@@ -69,11 +70,12 @@ algorithms = {
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
             'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],        
-        }     
+        },
+	'n_jobs': 1       
     },    
     'extra_trees': {
         'estimator': 
-            ExtraTreesRegressor(n_jobs=-1, random_state=42)
+            ExtraTreesRegressor(n_jobs=-10, random_state=42)
         ,
         'params': {
             'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
@@ -84,7 +86,8 @@ algorithms = {
             'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 50, 100],
             'forecaster__estimator__warm_start': [True, False],     
-        }     
+        },
+	'n_jobs': 1        
     },     
     'gradient_boosting': {
         'estimator': 
@@ -99,7 +102,8 @@ algorithms = {
             'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 100, 200],
             'forecaster__estimator__learning_rate': [0.1, 0.01], 
-        }     
+        },
+	'n_jobs': -1        
     },       
     'adaboost': {
         'estimator': 
@@ -109,7 +113,8 @@ algorithms = {
             'forecaster__estimator__loss': ['linear', 'square', 'exponential'],
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],
             'forecaster__estimator__learning_rate': [0.1, 0.05, 0.01],
-        }     
+        },
+	'n_jobs': -1        
     },      
     'lgb_regressor': {
         'estimator': 
@@ -121,7 +126,8 @@ algorithms = {
             'forecaster__estimator__min_child_samples': [5, 10, 20, 50],
             'forecaster__estimator__min_child_weight': [0.001, 0.005],
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],
-        }     
+        },
+	'n_jobs': -1        
     },   
     'knn': {
         'estimator': 
@@ -130,7 +136,8 @@ algorithms = {
         'params': {
             'forecaster__estimator__n_neighbors': [3, 5, 7, 9, 11, 13, 15, 17, 19, 21],
             'forecaster__estimator__p': [1, 2, 3],
-        }     
+        },
+	'n_jobs': 1        
     },    
     'passive_aggressive': {
         'estimator': 
@@ -144,7 +151,8 @@ algorithms = {
             'forecaster__estimator__n_iter_no_change': [1, 2, 3, 4, 5, 7],
             'forecaster__estimator__validation_fraction': [0.1, 0.2],
             'forecaster__estimator__tol': [None, 0.001, 0.002],
-        }     
+        },
+	'n_jobs': -1        
     },       
     'huber': {
         'estimator': 
@@ -156,7 +164,8 @@ algorithms = {
             'forecaster__estimator__max_iter': [50, 100, 200, 500],
             'forecaster__estimator__tol': [1e-05, 1e-06, 5e-05, 5e-04],
             'forecaster__estimator__warm_start': [True, False],
-        }     
+        },
+	'n_jobs': -1        
     },     
     'bayesian_ridge': {
         'estimator': 
@@ -170,7 +179,8 @@ algorithms = {
             'forecaster__estimator__compute_score': [True, False],
             'forecaster__estimator__n_iter': [100, 200, 300, 400],
             'forecaster__estimator__tol': [0.0005, 0.001, 0.005, 0.01, 0.05],
-        }     
+        },
+	'n_jobs': -1        
     },        
     'lasso_lars': {
         'estimator': 
@@ -179,7 +189,8 @@ algorithms = {
         'params': {
             'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
             'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
-        }     
+        },
+	'n_jobs': -1        
     },        
     'lars': {
         'estimator': 
@@ -187,7 +198,8 @@ algorithms = {
         ,
         'params': {
             'forecaster__estimator__n_nonzero_coefs': [1, 5, 10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
-        }     
+        },
+	'n_jobs': -1        
     },       
     'elastic_net': {
         'estimator': 
@@ -199,7 +211,8 @@ algorithms = {
             'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
             'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
             'forecaster__estimator__warm_start': [True, False],
-        }     
+        },
+	'n_jobs': -1        
     },        
     'ridge': {
         'estimator': 
@@ -209,7 +222,8 @@ algorithms = {
             'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
             'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
             'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
-        }     
+        },
+	'n_jobs': -1        
     },     
     'lasso': {
         'estimator': 
@@ -220,7 +234,8 @@ algorithms = {
             'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
             'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
             'forecaster__estimator__warm_start': [True, False],
-        }     
+        },
+	'n_jobs': -1        
     },        
 }
 
@@ -289,7 +304,7 @@ for target in data.drop(columns=['datetime']):
             cv = cv, 
             param_grid = param_grid,
             scoring = mase,
-            n_jobs = -1,
+            n_jobs = value['n_jobs'],
             verbose = 10
         )
 
