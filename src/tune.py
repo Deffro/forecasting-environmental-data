@@ -44,50 +44,50 @@ tune_only_window_length = args.tune_only_window_length
 fast = args.fast
 
 algorithms = {
+    'random_forest': {
+        'estimator': 
+            RandomForestRegressor(n_jobs=-3, random_state=42)
+        ,
+        'params': {
+            'forecaster__estimator__ccp_alpha': [0, 0.01],
+            'forecaster__estimator__max_depth': [1, 2, 5, 10, None],
+            'forecaster__estimator__max_leaf_nodes': [3, 16, None],
+            'forecaster__estimator__min_impurity_decrease': [0, 0.01],
+            'forecaster__estimator__min_samples_leaf': [1, 2],
+            'forecaster__estimator__min_samples_split': [2, 3],
+            'forecaster__estimator__n_estimators': [10, 50, 100, 200],        
+        },
+	'n_jobs': 22      
+    },    
     'decision_tree': {
         'estimator': 
             DecisionTreeRegressor(random_state=42)
         ,
         'params': {
-            'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
+            'forecaster__estimator__ccp_alpha': [0, 0.01],
             'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, None],
             'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
-            'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
+            'forecaster__estimator__min_impurity_decrease': [0, 0.01],
             'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
             'forecaster__estimator__min_samples_split': [2, 3]            
         },
 	'n_jobs': -3     
     },
-    'random_forest': {
-        'estimator': 
-            RandomForestRegressor(n_jobs=-10, random_state=42)
-        ,
-        'params': {
-            'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
-            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, None],
-            'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
-            'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
-            'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
-            'forecaster__estimator__min_samples_split': [2, 3],
-            'forecaster__estimator__n_estimators': [10, 50, 100, 200],        
-        },
-	'n_jobs': 1       
-    },    
     'extra_trees': {
         'estimator': 
-            ExtraTreesRegressor(n_jobs=-10, random_state=42)
+            ExtraTreesRegressor(n_jobs=-3, random_state=42)
         ,
         'params': {
-            'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
-            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, None],
-            'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
-            'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
-            'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
+            'forecaster__estimator__ccp_alpha': [0, 0.01],
+            'forecaster__estimator__max_depth': [1, 2, 5, None],
+            'forecaster__estimator__max_leaf_nodes': [3, 16, None],
+            'forecaster__estimator__min_impurity_decrease': [0, 0.01],
+            'forecaster__estimator__min_samples_leaf': [1, 2],
             'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 50, 100],
             'forecaster__estimator__warm_start': [True, False],     
         },
-	'n_jobs': 1        
+	'n_jobs': 22        
     },     
     'gradient_boosting': {
         'estimator': 
@@ -95,9 +95,9 @@ algorithms = {
         ,
         'params': {
             'forecaster__estimator__alpha': [0.5, 0.9],
-            'forecaster__estimator__ccp_alpha': [0, 0.01, 0.1],
-            'forecaster__estimator__max_depth': [2, 3, 5, 10, None],
-            'forecaster__estimator__min_impurity_decrease': [0, 0.01, 0.1],
+            'forecaster__estimator__ccp_alpha': [0, 0.01],
+            'forecaster__estimator__max_depth': [2, 5, None],
+            'forecaster__estimator__min_impurity_decrease': [0, 0.01],
             'forecaster__estimator__min_samples_leaf': [1, 2],
             'forecaster__estimator__min_samples_split': [2, 3],
             'forecaster__estimator__n_estimators': [10, 100, 200],
@@ -121,8 +121,8 @@ algorithms = {
             lgbm.sklearn.LGBMRegressor(random_state=42)
         ,
         'params': {
-            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, -1],
-            'forecaster__estimator__num_leaves': [2, 3, 10, 20, 31, 100],
+            'forecaster__estimator__max_depth': [1, 2, 5, 10, -1],
+            'forecaster__estimator__num_leaves': [2, 3, 10, 31, 100],
             'forecaster__estimator__min_child_samples': [5, 10, 20, 50],
             'forecaster__estimator__min_child_weight': [0.001, 0.005],
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],
@@ -148,7 +148,7 @@ algorithms = {
             'forecaster__estimator__early_stopping': [True, False],
             'forecaster__estimator__epsilon': [0.01, 0.05, 0.1, 0.2],
             'forecaster__estimator__max_iter': [500, 1000, 2000],
-            'forecaster__estimator__n_iter_no_change': [1, 2, 3, 4, 5, 7],
+            'forecaster__estimator__n_iter_no_change': [1, 2, 3, 4, 5],
             'forecaster__estimator__validation_fraction': [0.1, 0.2],
             'forecaster__estimator__tol': [None, 0.001, 0.002],
         },
