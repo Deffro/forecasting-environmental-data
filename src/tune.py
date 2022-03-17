@@ -172,10 +172,10 @@ algorithms = {
             BayesianRidge()
         ,
         'params': {
-            'forecaster__estimator__alpha_1': [1e-05, 5e-05, 1e-06, 5e-06],
-            'forecaster__estimator__alpha_2': [1e-05, 5e-05, 1e-06, 5e-06],
-            'forecaster__estimator__lambda_1': [1e-05, 5e-05, 1e-06, 5e-06],
-            'forecaster__estimator__lambda_2': [1e-05, 5e-05, 1e-06, 5e-06],
+            'forecaster__estimator__alpha_1': [1e-05, 1e-06, 5e-06],
+            'forecaster__estimator__alpha_2': [1e-05, 1e-06, 5e-06],
+            'forecaster__estimator__lambda_1': [1e-05, 1e-06, 5e-06],
+            'forecaster__estimator__lambda_2': [1e-05, 1e-06, 5e-06],
             'forecaster__estimator__compute_score': [True, False],
             'forecaster__estimator__n_iter': [100, 200, 300, 400],
             'forecaster__estimator__tol': [0.0005, 0.001, 0.005, 0.01, 0.05],
