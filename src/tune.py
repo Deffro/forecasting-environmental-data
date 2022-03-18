@@ -197,7 +197,7 @@ algorithms = {
             Lars(random_state=42)
         ,
         'params': {
-            'forecaster__estimator__n_nonzero_coefs': [1, 5, 10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+            'forecaster__estimator__n_nonzero_coefs': [1, 5, 10, 50, 100, 200, 300, 400, 500, 600, 700],
         },
 	'n_jobs': -3        
     },       
