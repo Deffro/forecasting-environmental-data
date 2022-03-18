@@ -206,7 +206,7 @@ algorithms = {
             ElasticNet(random_state=42)
         ,
         'params': {
-            'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
+            'forecaster__estimator__alpha': [0.1, 0.3, 0.5, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2],
             'forecaster__estimator__l1_ratio': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
             'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
             'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
