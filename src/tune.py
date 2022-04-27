@@ -256,6 +256,8 @@ data['datetime'] = data.index
 data.index = pd.PeriodIndex(data.index, freq=freq_sktime)
 
 for target in data.drop(columns=['datetime']):
+    target_ = target
+    target = target.replace('/', '')
     print('#'*70, target, '#'*70)
 
     # split data
@@ -308,7 +310,7 @@ for target in data.drop(columns=['datetime']):
             verbose = 10
         )
 
-        gscv.fit(train[target], fh=fh)
+        gscv.fit(train[target_], fh=fh)
 
         if tune_only_window_length == 'True':
             pd.to_pickle(gscv.best_forecaster_, f'../results/tuned_models/just_window/{dataset_name}/{target}.{algorithm_name}.pkl')
