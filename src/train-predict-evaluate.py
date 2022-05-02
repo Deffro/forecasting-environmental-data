@@ -228,7 +228,8 @@ if sample == 'valid':
     for target in data.drop(columns=['datetime']).columns:
     
         # check if file already exists
-        target_ = target.replace('/', '_')
+        target_ = target
+        target = target.replace('/', '')
         if os.path.isfile(f'../results/predictions/valid/no_preprocess/{dataset_name}/{target_}.csv') is False:
     
             print('#'*70, target, '#'*70)

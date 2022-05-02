@@ -35,7 +35,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Tuning for ML algorithms. Tune window_length and algorithm parameters.')
 parser.add_argument('dataset_name', help='Dataset Name')
-parser.add_argument('tune_only_window_length', help='If True, Just find the optimal window_length and not the algorithm parameters. Else tune both.')
+parser.add_argument('tune_only_window_length', help='If True, Just find the optimal window_length and not the algorithm parameters. Else tune algorithm parameters using the tuned window.')
 parser.add_argument('fast', help='If True, use only one seasonal_period to tune for the expanding window')
 
 args = parser.parse_args()
@@ -44,6 +44,20 @@ tune_only_window_length = args.tune_only_window_length
 fast = args.fast
 
 algorithms = {
+    'decision_tree': {
+        'estimator': 
+            DecisionTreeRegressor(random_state=42)
+        ,
+        'params': {
+            'forecaster__estimator__ccp_alpha': [0, 0.01],
+            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, None],
+            'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
+            'forecaster__estimator__min_impurity_decrease': [0, 0.01],
+            'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
+            'forecaster__estimator__min_samples_split': [2, 3]            
+        },
+	'n_jobs': -1     
+    },
     'random_forest': {
         'estimator': 
             RandomForestRegressor(n_jobs=-3, random_state=42)
@@ -59,20 +73,6 @@ algorithms = {
         },
 	'n_jobs': 22      
     },    
-    'decision_tree': {
-        'estimator': 
-            DecisionTreeRegressor(random_state=42)
-        ,
-        'params': {
-            'forecaster__estimator__ccp_alpha': [0, 0.01],
-            'forecaster__estimator__max_depth': [1, 2, 3, 4, 5, 10, None],
-            'forecaster__estimator__max_leaf_nodes': [3, 8, 16, 100, None],
-            'forecaster__estimator__min_impurity_decrease': [0, 0.01],
-            'forecaster__estimator__min_samples_leaf': [1, 2, 3, 4],
-            'forecaster__estimator__min_samples_split': [2, 3]            
-        },
-	'n_jobs': -3     
-    },
     'extra_trees': {
         'estimator': 
             ExtraTreesRegressor(n_jobs=-3, random_state=42)
@@ -103,7 +103,7 @@ algorithms = {
             'forecaster__estimator__n_estimators': [10, 100, 200],
             'forecaster__estimator__learning_rate': [0.1, 0.01], 
         },
-	'n_jobs': -3        
+	'n_jobs': -1       
     },       
     'adaboost': {
         'estimator': 
@@ -114,7 +114,7 @@ algorithms = {
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],
             'forecaster__estimator__learning_rate': [0.1, 0.05, 0.01],
         },
-	'n_jobs': -3        
+	'n_jobs': -1        
     },      
     'lgb_regressor': {
         'estimator': 
@@ -126,8 +126,9 @@ algorithms = {
             'forecaster__estimator__min_child_samples': [5, 10, 20, 50],
             'forecaster__estimator__min_child_weight': [0.001, 0.005],
             'forecaster__estimator__n_estimators': [10, 50, 100, 200],
+            'forecaster__estimator__learning_rate': [0.1, 0.01], 
         },
-	'n_jobs': -3        
+	'n_jobs': -1        
     },   
     'knn': {
         'estimator': 
@@ -152,7 +153,7 @@ algorithms = {
             'forecaster__estimator__validation_fraction': [0.1, 0.2],
             'forecaster__estimator__tol': [None, 0.001, 0.002],
         },
-	'n_jobs': -3        
+	'n_jobs': -1       
     },       
     'huber': {
         'estimator': 
@@ -165,7 +166,7 @@ algorithms = {
             'forecaster__estimator__tol': [1e-05, 1e-06, 5e-05, 5e-04],
             'forecaster__estimator__warm_start': [True, False],
         },
-	'n_jobs': -3        
+	'n_jobs': -1       
     },     
     'bayesian_ridge': {
         'estimator': 
@@ -178,9 +179,9 @@ algorithms = {
             'forecaster__estimator__lambda_2': [1e-05, 1e-06, 5e-06],
             'forecaster__estimator__compute_score': [True, False],
             'forecaster__estimator__n_iter': [100, 200, 300, 400],
-            'forecaster__estimator__tol': [0.0005, 0.001, 0.005, 0.01, 0.05],
+            'forecaster__estimator__tol': [0.001, 0.005, 0.01, 0.05],
         },
-	'n_jobs': -3        
+	'n_jobs': -1     
     },        
     'lasso_lars': {
         'estimator': 
@@ -190,7 +191,7 @@ algorithms = {
             'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
             'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
         },
-	'n_jobs': -3        
+	'n_jobs': -1      
     },        
     'lars': {
         'estimator': 
@@ -199,43 +200,43 @@ algorithms = {
         'params': {
             'forecaster__estimator__n_nonzero_coefs': [1, 5, 10, 50, 100, 200, 300, 400, 500, 600, 700],
         },
-	'n_jobs': -3        
+	'n_jobs': -1      
     },       
     'elastic_net': {
         'estimator': 
             ElasticNet(random_state=42)
         ,
         'params': {
-            'forecaster__estimator__alpha': [0.1, 0.3, 0.5, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2],
+            'forecaster__estimator__alpha': [0.1, 0.5, 0.8, 1, 1.2, 1.5, 2],
             'forecaster__estimator__l1_ratio': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
-            'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
+            'forecaster__estimator__max_iter': [100, 250, 500, 750, 1000],
+            'forecaster__estimator__tol': [0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
             'forecaster__estimator__warm_start': [True, False],
         },
-	'n_jobs': -3        
+	'n_jobs': -1     
     },        
     'ridge': {
         'estimator': 
             Ridge(random_state=42)
         ,
         'params': {
-            'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
-            'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
-            'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
+            'forecaster__estimator__alpha': [0.1, 0.5, 0.8, 1, 1.2, 1.5, 2],
+            'forecaster__estimator__max_iter': [100, 250, 500, 750, 1000],
+            'forecaster__estimator__tol': [0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
         },
-	'n_jobs': -3        
+	'n_jobs': -1      
     },     
     'lasso': {
         'estimator': 
             Lasso(random_state=42)
         ,
         'params': {
-            'forecaster__estimator__alpha': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2],
-            'forecaster__estimator__max_iter': [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
-            'forecaster__estimator__tol': [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
+            'forecaster__estimator__alpha': [0.1, 0.5, 0.8, 1, 1.2, 1.5, 2],
+            'forecaster__estimator__max_iter': [100, 250, 500, 750, 1000],
+            'forecaster__estimator__tol': [0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005],
             'forecaster__estimator__warm_start': [True, False],
         },
-	'n_jobs': -3        
+	'n_jobs': -1     
     },        
 }
 
@@ -278,7 +279,7 @@ for target in data.drop(columns=['datetime']):
 
         estimator = DirectTabularRegressionForecaster(estimator=forecaster)
         
-        if tune_only_window_length == 'True':
+        if tune_only_window_length != 'True':
             window_tuned_model = pd.read_pickle(f'../results/tuned_models/just_window/{dataset_name}/{target}.{algorithm_name}.pkl')
             window_length = window_tuned_model.get_params()['forecaster'].get_params()['window_length']
             estimator = estimator.set_params(window_length=window_length)
@@ -300,6 +301,8 @@ for target in data.drop(columns=['datetime']):
         else:
             param_grid = value['params']
 
+        print("Window length in model:", pipe.get_params()['forecaster'].get_params()['window_length'])
+        
         gscv = ForecastingGridSearchCV(
             forecaster = pipe, 
             strategy = "refit", 
