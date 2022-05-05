@@ -255,20 +255,20 @@ if sample == 'valid':
                 forecaster = value['estimator']
                 # if ML forecaster
                 if forecaster_name in ML_forecasters:
-                    window_tuned_model = pd.read_pickle(f'../results/tuned_models/just_window/{dataset_name}/{target}.{forecaster_name}.pkl')
-                    window_length = window_tuned_model.get_params()['forecaster'].get_params()['window_length']
-                    forecaster = forecaster.set_params(window_length=window_length)
+                    tuned_pipe = pd.read_pickle(f'../results/tuned_models/window_and_algorithm/{dataset_name}/{target}.{forecaster_name}.pkl')
+                    print("Window Length:", tuned_pipe.get_params()['forecaster'].get_params()['window_length'])
+                else:
+                    min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
+                    tuned_pipe = TransformedTargetForecaster(steps=[
+                        # ("detrender", Detrender()),
+                        # ("deseasonalizer", Differencer(lags=1)),
+                        ("minmaxscaler", min_max_scaler),
+                        ("forecaster", forecaster),
+                    ])
+                    
+                print('='*40, tuned_pipe, '='*40)
 
-                print('='*40, forecaster, '='*40)
-                min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
-                pipe = TransformedTargetForecaster(steps=[
-                    # ("detrender", Detrender()),
-                    # ("deseasonalizer", Differencer(lags=1)),
-                    ("minmaxscaler", min_max_scaler),
-                    ("forecaster", forecaster),
-                ])
-
-                df = evaluate_sktime(pipe, train[target], fh=fh, initial_window=initial_window, 
+                df = evaluate_sktime(tuned_pipe, train[target], fh=fh, initial_window=initial_window, 
                                      metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], seasonal_period=seasonal_period)
 
                 # save predictions in a df
@@ -351,20 +351,20 @@ elif sample == 'test':
                 forecaster = value['estimator']
                 # if ML forecaster
                 if forecaster_name in ML_forecasters:
-                    window_tuned_model = pd.read_pickle(f'../results/tuned_models/just_window/{dataset_name}/{target}.{forecaster_name}.pkl')
-                    window_length = window_tuned_model.get_params()['forecaster'].get_params()['window_length']
-                    forecaster = forecaster.set_params(window_length=window_length)
+                    tuned_pipe = pd.read_pickle(f'../results/tuned_models/window_and_algorithm/{dataset_name}/{target}.{forecaster_name}.pkl')
+                    print("Window Length:", tuned_pipe.get_params()['forecaster'].get_params()['window_length'])
+                else:
+                    min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
+                    tuned_pipe = TransformedTargetForecaster(steps=[
+                        # ("detrender", Detrender()),
+                        # ("deseasonalizer", Differencer(lags=1)),
+                        ("minmaxscaler", min_max_scaler),
+                        ("forecaster", forecaster),
+                    ])
+                    
+                print('='*40, tuned_pipe, '='*40)
 
-                print('='*40, forecaster, '='*40)
-                min_max_scaler = TabularToSeriesAdaptor(MinMaxScaler(feature_range=(1, 2)))
-                pipe = TransformedTargetForecaster(steps=[
-                    # ("detrender", Detrender()),
-                    # ("deseasonalizer", Differencer(lags=1)),
-                    ("minmaxscaler", min_max_scaler),
-                    ("forecaster", forecaster),
-                ])
-
-                df = evaluate_sktime(pipe, data[target], fh=fh, initial_window=initial_window, 
+                df = evaluate_sktime(tuned_pipe, data[target], fh=fh, initial_window=initial_window, 
                                      metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], seasonal_period=seasonal_period)
 
                 # save predictions in a df
