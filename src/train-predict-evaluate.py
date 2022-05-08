@@ -241,7 +241,7 @@ if sample == 'valid':
             # save prediction in a df. a column per method
             predictions_valid = pd.DataFrame()
             predictions_valid['datetime'] = valid['datetime']
-            predictions_valid['true_values'] = valid[target]
+            predictions_valid['true_values'] = valid[target_]
 
             # define metrics
             rmse = MeanSquaredError(square_root=True)
@@ -268,7 +268,7 @@ if sample == 'valid':
                     
                 print('='*40, tuned_pipe, '='*40)
 
-                df = evaluate_sktime(tuned_pipe, train[target], fh=fh, initial_window=initial_window, 
+                df = evaluate_sktime(tuned_pipe, train[target_], fh=fh, initial_window=initial_window, 
                                      metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], seasonal_period=seasonal_period)
 
                 # save predictions in a df
@@ -325,7 +325,8 @@ elif sample == 'test':
     for target in data.drop(columns=['datetime']).columns:
     
         # check if file already exists
-        target_ = target.replace('/', '_')
+        target_ = target
+        target = target.replace('/', '_')
         if os.path.isfile(f'../results/predictions/test/no_preprocess/{dataset_name}/{target_}.csv') is False:    
     
             print('#'*70, target, '#'*70)
@@ -337,7 +338,7 @@ elif sample == 'test':
             # save prediction in a df. a column per method
             predictions_test = pd.DataFrame()
             predictions_test['datetime'] = test['datetime']
-            predictions_test['true_values'] = test[target]
+            predictions_test['true_values'] = test[target_]
 
             # define metrics
             rmse = MeanSquaredError(square_root=True)
@@ -364,7 +365,7 @@ elif sample == 'test':
                     
                 print('='*40, tuned_pipe, '='*40)
 
-                df = evaluate_sktime(tuned_pipe, data[target], fh=fh, initial_window=initial_window, 
+                df = evaluate_sktime(tuned_pipe, data[target_], fh=fh, initial_window=initial_window, 
                                      metrics=['MAE', 'RMSE', 'sMAPE', 'MASE'], seasonal_period=seasonal_period)
 
                 # save predictions in a df
