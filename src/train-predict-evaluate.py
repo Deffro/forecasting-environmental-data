@@ -318,8 +318,8 @@ if sample == 'valid':
                     scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE std'] = np.std(smapes) 
                     scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE std'] = np.std(mases) 
 
-            predictions_valid.to_csv(f'../results/predictions/valid/no_preprocess/{dataset_name}/{target_}.csv', index=False)
-            scores_expanding.to_csv(f'../results/scores/valid/no_preprocess/{dataset_name}/{target_}.csv', index=False)
+            predictions_valid.to_csv(f'../results/predictions/valid/no_preprocess/{dataset_name}/{target}.csv', index=False)
+            scores_expanding.to_csv(f'../results/scores/valid/no_preprocess/{dataset_name}/{target}.csv', index=False)
 
 elif sample == 'test':
     for target in data.drop(columns=['datetime']).columns:
@@ -415,5 +415,5 @@ elif sample == 'test':
                     scores_expanding.at[scores_expanding.index.max(), f'fh={i} sMAPE std'] = np.std(smapes) 
                     scores_expanding.at[scores_expanding.index.max(), f'fh={i} MASE std'] = np.std(mases) 
 
-            predictions_test.to_csv(f'../results/predictions/test/no_preprocess/{dataset_name}/{target_}.csv', index=False)
-            scores_expanding.to_csv(f'../results/scores/test/no_preprocess/{dataset_name}/{target_}.csv', index=False)
+            predictions_test.to_csv(f'../results/predictions/test/no_preprocess/{dataset_name}/{target}.csv', index=False)
+            scores_expanding.to_csv(f'../results/scores/test/no_preprocess/{dataset_name}/{target}.csv', index=False)
